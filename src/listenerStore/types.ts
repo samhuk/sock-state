@@ -20,15 +20,19 @@ export type EventNameToListenersDict<
 }
 
 export type ListenerStore<
-  TEventNames extends string = string
+  TEventNames extends string = string,
+  TArgs extends any[] = any[]
 > = {
   count: number
   listeners: UuidToListenerDict<TEventNames>
   eventNameToListeners: EventNameToListenersDict<TEventNames>
-  call: (eventName: TEventNames, ...args: any) => void
+  call: (eventName: TEventNames, ...args: TArgs) => void
+  /**
+   * @returns Listener UUID
+   */
   add: <TTEventName extends TEventNames>(
     eventName: TTEventName,
-    handler: (...args: any[]) => void,
+    handler: (...args: TArgs) => void,
     options?: {
       uuid?: string,
       removeOnceCalled?: boolean

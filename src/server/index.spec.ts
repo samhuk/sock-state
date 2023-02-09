@@ -1,6 +1,5 @@
 import { createServer } from '.'
 import { createNodeClient } from '../client/node'
-import { Message, MessageType } from '../message/types'
 import { wait } from '../util/async'
 
 describe('server', () => {
@@ -13,7 +12,13 @@ describe('server', () => {
         port: 4000,
       })
 
-      const client = createNodeClient<Message>({
+      type TestMessage = {
+        type: string
+        data: any,
+        dateCreated: number
+      }
+
+      const client = createNodeClient<TestMessage>({
         host: 'localhost',
         port: 4000,
       })
@@ -21,7 +26,7 @@ describe('server', () => {
       await client.connect()
 
       client.send({
-        type: MessageType.ACTION,
+        type: 'action',
         data: {
           type: 'topic1/actionName',
           payload: { foo: 'bar' },

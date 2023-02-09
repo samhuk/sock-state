@@ -15,18 +15,35 @@ export declare type TypeDependantBase<
 }
 
 export enum MessageType {
+  SUBSCRIBE = 'subscribe',
   ACTION = 'action'
 }
 
 export type Message<TMessageType extends MessageType = MessageType> = TypeDependantBase<MessageType, {
   [MessageType.ACTION]: ActionMessageOptions
+  [MessageType.SUBSCRIBE]: SubscribeMessageOptions
 }, TMessageType, 'type', 'data'> & { dateCreated: number }
 
 export type MessageList = Message[]
 
 export type ActionMessage = Message<MessageType.ACTION>
 
-export type ActionMessageOptions = {
+export type Action = {
   type: string
   payload: any
+}
+
+export type ActionMessageOptions = Action & {
+  topic: string
+}
+
+export type SubscribeMessage = Message<MessageType.SUBSCRIBE>
+
+export type SubscribeMessageOptions = {
+  topics: string | string[]
+}
+
+export type ResolvedMessages = {
+  subscribe: SubscribeMessage[],
+  action: { [topicName: string]: ActionMessage[] }
 }

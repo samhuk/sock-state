@@ -1,4 +1,4 @@
-import { RawData, WebSocket } from 'ws'
+import { RawData } from 'ws'
 import { Client, Clients } from './clientStore/types'
 
 export type ServerEventNames = 'connect' | 'disconnect' | 'message'
@@ -7,7 +7,7 @@ export type OnHandlerFn<
   TEvent extends ServerEventNames = ServerEventNames,
   TMessage extends any = any
 > = TEvent extends 'message'
-  ? (msg: TMessage) => void
+  ? (msg: TMessage, senderClient: Client) => void
   : (client: Client) => void
 
 /**

@@ -5,8 +5,9 @@ import { Listener, ListenerStore } from './types'
  * Responsible for storing listeners for arbitrary event names.
  */
 export const createListenerStore = <
-  TEventNames extends string = string
->(): ListenerStore<TEventNames> => {
+  TEventNames extends string = string,
+  TArgs extends any[] = any[]
+>(): ListenerStore<TEventNames, TArgs> => {
   let instance: ListenerStore<TEventNames>
 
   return instance = {
@@ -20,6 +21,7 @@ export const createListenerStore = <
       listenersToCall.forEach(l => l.handler(...args))
       listenersToRemove.forEach(l => instance.remove(l.uuid))
     },
+    // @ts-ignore
     add: (eventName, handler, options) => {
       const listener: Listener<TEventNames> = {
         uuid: options?.uuid ?? randomUUID(),

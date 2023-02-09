@@ -1,18 +1,8 @@
+import { Server } from '../../server/types'
+import { TopicOptionsDict } from './topicStore/types'
+
 export type StoreServer = {
-  
-}
-
-export type Topic = {
-  broadcast: (message)
-  subscribers: {
-    [clientUuid: string]: { dateSubscribed: number }
-  }
-}
-
-export type TopicOptionsDict = {
-  [topicName: string]: {
-
-  }
+  server: Server
 }
 
 export type StoreServerOptions = {

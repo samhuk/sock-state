@@ -16,13 +16,13 @@ export const createServer = <
   const wss = new WebSocketServer({ host: options.host, port: options.port })
   const clientStore = createClientStore()
 
-  wss.on('connection', ws => {
+  wss.on('connection', (ws, req) => {
     const client = clientStore.add({ ws })
     listenerStore.call('connect', client)
     logger.log(`${client.shortUuid} connected (${clientStore.count} clients).`)
 
     ws.on('message', msgData => {
-      listenerStore.call('message', msgData)
+      listenerStore.call('message', msgData, client)
     })
 
     ws.on('close', code => {
