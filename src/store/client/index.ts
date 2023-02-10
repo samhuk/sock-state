@@ -1,6 +1,8 @@
 import { createListenerStore } from '../../listenerStore'
 import { sortActionMessagesByTopic } from '../message'
 import { ActionMessage, Message, MessageType } from '../message/types'
+import { Reducer } from '../reducer/types'
+import { createStateStore } from '../stateStore'
 import { ClientCreator, StoreClient, StoreClientOptions } from './types'
 
 export const createStoreClient = (options: StoreClientOptions, clientCreator: ClientCreator): StoreClient => {
@@ -30,13 +32,11 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
       data: action,
     }),
     subscribe: (topic, reducer) => {
-      let state = reducer() // TODO: Need to get initial state from server
+      const stateStore = createStateStore({ reducer: reducer as Reducer })
       const stateListeners = createListenerStore()
       const listenerUuid = listenerStore.add(topic, actionMsgs => {
-        actionMsgs.forEach(actionMsg => {
-          state = reducer(state, actionMsg.data as any)
-        })
-        stateListeners.call('change', state)
+        stateStore.digest(actionMsgs)
+        stateListeners.call('change', stateStore.state)
       })
 
       client.send({

@@ -14,5 +14,5 @@ export type TopicStoreOptions = {
 export type TopicStore = {
   addSubscriber: (topicName: string, client: Client) => Subscriber
   removeSubscriber: (clientUuid: string) => void
-  broadcast: (msgs: ActionMessage | ActionMessage[]) => void
+  digest: (msgs: ActionMessage | ActionMessage[]) => void
 }

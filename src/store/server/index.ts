@@ -20,34 +20,31 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
     topicNames.forEach(topicName => topicStore.addSubscriber(topicName, senderClient))
   }
 
-  const processMessage = (msg: Message, senderClient: Client) => {
-    switch (msg.type) {
-      case MessageType.SUBSCRIBE: {
-        processSubscribeMessage(msg, senderClient)
-        break
+  const processMessage = (msgs: Message | Message[], senderClient: Client) => {
+    if (Array.isArray(msgs)) {
+      const messagesByType = sortMessagesByType(msgs)
+      messagesByType.subscribe.forEach(msg => processSubscribeMessage(msg, senderClient))
+      topicStore.digest(messagesByType.action)
+    }
+    else {
+      switch (msgs.type) {
+        case MessageType.SUBSCRIBE: {
+          processSubscribeMessage(msgs, senderClient)
+          break
+        }
+        case MessageType.ACTION: {
+          topicStore.digest(msgs)
+          break
+        }
+        default:
+          break
       }
-      case MessageType.ACTION: {
-        topicStore.broadcast(msg)
-        break
-      }
-      default:
-        break
     }
   }
 
-  const processMessageBatch = (msgs: Message[], senderClient: Client) => {
-    const messagesByType = sortMessagesByType(msgs)
-    messagesByType.subscribe.forEach(msg => processSubscribeMessage(msg, senderClient))
-    topicStore.broadcast(messagesByType.action)
-  }
-
   server.on('message', (rawData, senderClient) => {
-    const msg = JSON.parse(String(rawData)) as Message | Message[]
-
-    if (Array.isArray(msg))
-      processMessageBatch(msg, senderClient)
-    else
-      processMessage(msg, senderClient)
+    const msgs = JSON.parse(String(rawData)) as Message | Message[]
+    processMessage(msgs, senderClient)
   })
 
   server.on('disconnect', client => {

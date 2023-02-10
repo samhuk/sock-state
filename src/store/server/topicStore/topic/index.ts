@@ -1,3 +1,4 @@
+import { createStateStore } from '../../../stateStore'
 import { createSubscriberStore } from '../../subscriberStore'
 import { Topic, TopicOptionsWithoutName } from './types'
 
@@ -7,17 +8,14 @@ export const createTopic = <TState extends any>(
 ): Topic<TState> => {
   let instance: Topic<TState>
   const subscriberStore = createSubscriberStore()
+  const stateStore = createStateStore({ reducer: options.reducer })
 
   return instance = {
-    state: options.reducer(),
+    getState: () => stateStore.state,
     addSubscriber: client => subscriberStore.add({ client }),
     removeSubscriber: clientUuid => subscriberStore.remove(clientUuid),
-    broadcast: msgs => {
-      if (Array.isArray(msgs))
-        msgs.forEach(msg => instance.state = options.reducer(instance.state, msg.data))
-      else
-        instance.state = options.reducer(instance.state, msgs.data)
-
+    digest: msgs => {
+      stateStore.digest(msgs)
       subscriberStore.broadcast(msgs)
     },
   }

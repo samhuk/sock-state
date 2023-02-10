@@ -17,8 +17,8 @@ export type TopicOptions<
 }
 
 export type Topic<TState extends any = any> = {
-  state: TState
+  getState: () => TState
   addSubscriber: (client: Client) => Subscriber
   removeSubscriber: (clientUuid: string) => void
-  broadcast: (actions: ActionMessage | ActionMessage[]) => void
+  digest: (actions: ActionMessage | ActionMessage[]) => void
 }

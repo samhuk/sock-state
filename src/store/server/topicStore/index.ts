@@ -16,14 +16,14 @@ export const createTopicStore = (options: TopicStoreOptions): TopicStore => {
     removeSubscriber: clientUuid => {
       Object.values(topics).forEach(topic => topic.removeSubscriber(clientUuid))
     },
-    broadcast: msgs => {
+    digest: msgs => {
       if (Array.isArray(msgs)) {
         Object.entries(sortActionMessagesByTopic(msgs)).forEach(([topicName, _msgs]) => {
-          topics[topicName].broadcast(_msgs)
+          topics[topicName].digest(_msgs)
         })
       }
       else {
-        topics[msgs.data.topic].broadcast(msgs)
+        topics[msgs.data.topic].digest(msgs)
       }
     },
   }
