@@ -99,5 +99,33 @@ describe('listenerStore', () => {
       expect(timesCalled).toBe(1)
       expect(instance.count).toBe(0)
     })
+
+    test('types', () => {
+      type TestEventNames = 'event1' | 'event2'
+      type TestEventHandlerMap = { event1: (s: string, n: number) => void, event2: (n: number, s: string) => void }
+
+      const instance = fn<TestEventNames, TestEventHandlerMap>()
+
+      // -- Event 1
+      // @ts-expect-error
+      instance.call('event1', 1, 2) // Wrong arg type
+      // @ts-expect-error
+      instance.call('event1', '1', 2, 3) // Too many args
+      // @ts-expect-error
+      instance.call('event1', '1') // Too few args
+
+      instance.call('event1', '1', 2) // Correct args
+
+      // -- Event 2
+      // @ts-expect-error
+      instance.call('event2', 1, 2)
+      // @ts-expect-error
+      instance.call('event2', 1, '2', 3)
+      // @ts-expect-error
+      instance.call('event2', 1)
+      instance.call('event2', 1, '2')
+
+      expect(true).toBe(true) // Dummy
+    })
   })
 })

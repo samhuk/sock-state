@@ -1,25 +1,82 @@
+import { Client } from '../../client/types'
 import { createListenerStore } from '../../listenerStore'
-import { sortActionMessagesByTopic } from '../message'
-import { ActionMessage, Message, MessageType } from '../message/types'
+import { sortActionMessagesByTopic, sortMessagesByType } from '../message'
+import { ActionMessage, Message, MessageType, StateMessage } from '../message/types'
 import { Reducer } from '../reducer/types'
 import { createStateStore } from '../stateStore'
 import { ClientCreator, StoreClient, StoreClientOptions } from './types'
 
+const waitUntilTopicStateMessage = (client: Client<Message>, topic: string) => new Promise<{
+  state: any
+
+}>(res => {
+  const listenerUuid = client.on('message', msg => {
+
+  })
+})
+
+type ClientTopicStateStoreOptions<TState extends any = any> = {
+  reducer: Reducer<TState>
+  onStateChange: (state: TState) => void
+}
+
+type ClientTopicStateStore<TState extends any = any> = {
+  loaded: boolean
+  getState: () => TState
+  digestActionMsgs: (actionMsgs: ActionMessage | ActionMessage[]) => void
+  digestStateMsg: (stateMsg: StateMessage) => void
+}
+
+const createTopicStateStore = (options: ClientTopicStateStoreOptions): ClientTopicStateStore => {
+  const stateStore = createStateStore({
+    reducer: options.reducer,
+  })
+  let instance: ClientTopicStateStore
+  let preLoadedActionMsgs: ActionMessage[] = []
+
+  return instance = {
+    loaded: false,
+    getState: () => stateStore.state,
+    digestActionMsgs: msgs => {
+      if (!instance.loaded) {
+        preLoadedActionMsgs = preLoadedActionMsgs.concat(msgs)
+      }
+      else {
+        stateStore.digest(msgs)
+        options.onStateChange(stateStore.state)
+      }
+    },
+    digestStateMsg: msg => {
+      stateStore.set(msg.data.state)
+      stateStore.digest(preLoadedActionMsgs)
+      options.onStateChange(stateStore.state)
+      instance.loaded = true
+    },
+  }
+}
+
 export const createStoreClient = (options: StoreClientOptions, clientCreator: ClientCreator): StoreClient => {
-  const listenerStore = createListenerStore<string, [ActionMessage[]]>()
+  let instance: StoreClient
+
+  const topicStateStores: { [topicName: string]: ClientTopicStateStore } = {}
+
   const client = clientCreator({
     host: options.host,
     port: options.port,
   })
-  let instance: StoreClient
 
   client.on('message', msgs => {
-    const normalizedMsgs = Array.isArray(msgs) ? msgs : [msgs]
-    const actionMsgs = normalizedMsgs.filter(msg => msg.type === MessageType.ACTION) as Message<MessageType.ACTION>[]
-    const sortedActionMsgs = sortActionMessagesByTopic(actionMsgs)
+    const messagesByType = sortMessagesByType(msgs)
 
-    Object.entries(sortedActionMsgs).forEach(([topicName, _actionMsgs]) => {
-      listenerStore.call(topicName, _actionMsgs)
+    // Handle state messages
+    messagesByType.state.forEach(stateMsg => {
+      topicStateStores[stateMsg.data.topic].digestStateMsg(stateMsg)
+    })
+
+    // Handle action messages
+    const sortedActionMsgs = sortActionMessagesByTopic(messagesByType.action)
+    Object.entries(sortedActionMsgs).forEach(([topicName, actionMsgs]) => {
+      topicStateStores[topicName].digestActionMsgs(actionMsgs)
     })
   })
 
@@ -31,25 +88,27 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
       dateCreated: Date.now(),
       data: action,
     }),
-    subscribe: (topic, reducer) => {
-      const stateStore = createStateStore({ reducer: reducer as Reducer })
-      const stateListeners = createListenerStore()
-      const listenerUuid = listenerStore.add(topic, actionMsgs => {
-        stateStore.digest(actionMsgs)
-        stateListeners.call('change', stateStore.state)
+    subscribe: (topicName, reducer) => {
+      const stateChangeListeners = createListenerStore<'change', { change:(state: any) => any }>()
+
+      const stateStore = createTopicStateStore({
+        reducer: reducer as Reducer,
+        onStateChange: state => stateChangeListeners.call('change', state),
       })
+
+      topicStateStores[topicName] = stateStore
 
       client.send({
         type: MessageType.SUBSCRIBE,
         dateCreated: Date.now(),
         data: {
-          topics: topic,
+          topics: topicName,
         },
       })
 
       return {
-        addHandler: handler => stateListeners.add('change', handler),
-        removeHandler: handlerUuid => stateListeners.remove(handlerUuid),
+        addHandler: handler => stateChangeListeners.add('change', handler),
+        removeHandler: handlerUuid => stateChangeListeners.remove(handlerUuid),
       }
     },
   }

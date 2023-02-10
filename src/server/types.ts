@@ -1,7 +1,14 @@
 import { RawData } from 'ws'
+import { Logger } from '../util/logging'
 import { Client, Clients } from './clientStore/types'
 
 export type ServerEventNames = 'connect' | 'disconnect' | 'message'
+
+export type ServerEventNameHandlerMap<TMessage extends any = any> = {
+  connect: (client: Client) => void
+  disconnect: (client: Client) => void
+  message: (msg: TMessage, sender: Client) => void
+}
 
 export type OnHandlerFn<
   TEvent extends ServerEventNames = ServerEventNames,
@@ -20,6 +27,7 @@ export type OnFn<TMessage extends any = any> = <
 export type ServerOptions = {
   host: string
   port: number
+  logger?: Logger
 }
 
 export type Server<

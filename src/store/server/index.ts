@@ -53,5 +53,6 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
 
   return {
     server,
+    close: () => server.close(),
   }
 }

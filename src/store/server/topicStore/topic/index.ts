@@ -1,3 +1,4 @@
+import { MessageType, StateMessage } from '../../../message/types'
 import { createStateStore } from '../../../stateStore'
 import { createSubscriberStore } from '../../subscriberStore'
 import { Topic, TopicOptionsWithoutName } from './types'
@@ -12,7 +13,20 @@ export const createTopic = <TState extends any>(
 
   return instance = {
     getState: () => stateStore.state,
-    addSubscriber: client => subscriberStore.add({ client }),
+    addSubscriber: client => {
+      const subscriber = subscriberStore.add({ client })
+      const stateMsg: StateMessage = {
+        type: MessageType.STATE,
+        dateCreated: Date.now(),
+        data: {
+          topic: name,
+          state: stateStore.state,
+        },
+      }
+      const serializedStateMsg = JSON.stringify(stateMsg)
+      client.ws.send(serializedStateMsg)
+      return subscriber
+    },
     removeSubscriber: clientUuid => subscriberStore.remove(clientUuid),
     digest: msgs => {
       stateStore.digest(msgs)

@@ -6,8 +6,8 @@ import { Listener, ListenerStore } from './types'
  */
 export const createListenerStore = <
   TEventNames extends string = string,
-  TArgs extends any[] = any[]
->(): ListenerStore<TEventNames, TArgs> => {
+  TEventHandlerMap extends { [k in TEventNames]: (...args: any[]) => any } = { [k in TEventNames]: (...args: any[]) => any }
+>(): ListenerStore<TEventNames, TEventHandlerMap> => {
   let instance: ListenerStore<TEventNames>
 
   return instance = {

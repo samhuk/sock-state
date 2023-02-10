@@ -1,9 +1,11 @@
 import { ConnectionStatus } from '../../util/connectionStatus'
-import { OnHandlerFn, WebSocketEventName } from '../types'
+import { Logger } from '../../util/logging'
+import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
 
 export type WebSocketAdapterOptions = {
   deserializer?: (msg: string) => any
   serializer?: (msg: any) => string
+  logger?: Logger
 }
 
 /**
@@ -11,7 +13,7 @@ export type WebSocketAdapterOptions = {
  */
 export type WebSocketAdapterOnFn<TMessage extends any = any> = <
   TEvent extends WebSocketEventName,
->(event: TEvent, handler: OnHandlerFn<TEvent, TMessage>) => string
+>(event: TEvent, handler: WebSocketEventHandlerMap<TMessage>[TEvent]) => string
 
 export type WebSocketAdapter<TMessage extends any = any> = {
   connectionStatus: ConnectionStatus

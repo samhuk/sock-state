@@ -1,4 +1,5 @@
 import { ConnectionStatus } from '../util/connectionStatus'
+import { Logger } from '../util/logging'
 import { WebSocketAdapter, WebSocketAdapterOnFn } from './webSocketAdapter/types'
 
 export type ExtractMessageTypeFromOptions<
@@ -11,14 +12,12 @@ export type ExtractMessageTypeFromOptions<
 
 export type WebSocketEventName = 'connect' | 'disconnect' | 'message' | 'connection-status-change'
 
-export type OnHandlerFn<
-  TEvent extends WebSocketEventName = WebSocketEventName,
-  TMessage extends any = any
-> = TEvent extends 'message'
-  ? (msg: TMessage | TMessage[]) => void
-  : TEvent extends 'connection-status-change'
-    ? (newStatus: ConnectionStatus, prevStatus: ConnectionStatus) => void
-    : () => void
+export type WebSocketEventHandlerMap<TMessage extends any = any> = {
+  connect: () => void
+  disconnect: () => void
+  'connection-status-change': (newStatus: ConnectionStatus, prevStatus: ConnectionStatus) => void
+  message: (msg: TMessage | TMessage[]) => void
+}
 
 export type ClientOptions<
   TMessage extends any = any
@@ -34,6 +33,7 @@ export type ClientOptions<
    * @default JSON.stringify()
    */
   serializer?: (msg: TMessage) => string
+  logger?: Logger
 }
 
 export type Client<
@@ -61,6 +61,7 @@ export type BrowserClientOptions<
    * @default JSON.stringify()
    */
   serializer?: (msg: TMessage) => string
+  logger?: Logger
 }
 
 export type NodeClientOptions<

@@ -90,35 +90,43 @@ describe('store', () => {
 
     await wait(100)
 
-    client1.dispatch({
+    const setFoo = (val: boolean): FooBarActions & { topic: 'fooBar' } => ({
       topic: 'fooBar',
       type: 'setFoo',
       payload: {
-        foo: true,
+        foo: val,
       },
     })
 
-    client2.dispatch({
+    const setBar = (val: boolean): FooBarActions & { topic: 'fooBar' } => ({
       topic: 'fooBar',
       type: 'setBar',
       payload: {
-        bar: true,
+        bar: val,
       },
     })
 
+    client1.dispatch(setFoo(true))
+    client2.dispatch(setBar(true))
+    client2.dispatch(setBar(false))
+    client2.dispatch(setFoo(false))
+
     await wait(500)
 
-    await client1.disconnect()
-    await client2.disconnect()
-    await server.server.close()
-
-    await wait(100)
-
     expect(stateUpdatesClient1).toEqual([
-      { foo: true, bar: false },
-      { foo: true, bar: true },
+      { foo: false, bar: false }, // Initial state
+      { foo: true, bar: false }, // Client 1 updates foo
+      { foo: true, bar: true }, // Client 2 update bar
+      { foo: true, bar: false }, // Client 2 update bar
+      { foo: false, bar: false }, // Client 2 update foo
     ])
 
     expect(stateUpdatesClient2).toEqual(stateUpdatesClient1)
+
+    await client1.disconnect()
+    await client2.disconnect()
+    server.close()
+
+    await wait(100)
   })
 })

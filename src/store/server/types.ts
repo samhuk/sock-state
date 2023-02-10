@@ -3,6 +3,7 @@ import { TopicOptionsDict } from './topicStore/types'
 
 export type StoreServer = {
   server: Server
+  close: () => void
 }
 
 export type StoreServerOptions = {

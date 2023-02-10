@@ -2,8 +2,9 @@ import { wait } from '../../util/async'
 import { ConnectionStatus } from '../../util/connectionStatus'
 import { Logger } from '../../util/logging'
 import { createListenerStore } from '../../listenerStore'
-import { WebSocketEventName } from '../types'
+import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
 import { WebSocketAdapter, WebSocketAdapterOptions } from './types'
+import { DEFAULT_LOGGER } from './common'
 
 const _connect = (host: string, port: number, logger: Logger, retryDelayMs: number, onConnect: (ws: WebSocket) => void) => {
   let ws: WebSocket
@@ -45,11 +46,9 @@ export const createBrowserWebSocketAdapter = <TMessage extends any>(
   let manuallyClosed: boolean = false
   const serializer = options.serializer ?? (msg => JSON.stringify(msg))
   const deserializer = options.deserializer ?? (msg => JSON.parse(msg))
-  const listenerStore = createListenerStore<WebSocketEventName>()
+  const listenerStore = createListenerStore<WebSocketEventName, WebSocketEventHandlerMap>()
 
-  const logger: Logger = {
-    log: msg => console.log(msg),
-  }
+  const logger = options.logger ?? DEFAULT_LOGGER
 
   const changeConnectionStatus = (newStatus: ConnectionStatus) => {
     const prevStatus = instance.connectionStatus
@@ -102,8 +101,8 @@ export const createBrowserWebSocketAdapter = <TMessage extends any>(
       instance.once('disconnect', res)
       ws?.close()
     }),
-    once: (eventName, handler) => listenerStore.add(eventName, handler, { removeOnceCalled: true }),
-    on: (eventName, handler) => listenerStore.add(eventName, handler),
+    once: (eventName, handler) => listenerStore.add(eventName, handler as any, { removeOnceCalled: true }),
+    on: (eventName, handler) => listenerStore.add(eventName, handler as any),
     off: listenerUuid => listenerStore.remove(listenerUuid),
   }
 }

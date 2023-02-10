@@ -6,6 +6,7 @@ export const sortMessagesByType = (msgs: Message | Message[]): { [TMessageType i
   const result: { [TMessageType in MessageType]: Message<TMessageType>[] } = {
     subscribe: [],
     action: [],
+    state: [],
   }
   normalizedMsgs.forEach(msg => {
     result[msg.type].push(msg as any)

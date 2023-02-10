@@ -11,5 +11,8 @@ export const createStateStore = (options: StateStoreOptions): StateStore => {
       else
         instance.state = options.reducer(instance.state, msgs.data)
     },
+    set: state => {
+      instance.state = state
+    },
   }
 }
