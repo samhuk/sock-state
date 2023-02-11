@@ -74,42 +74,40 @@ describe('store', () => {
     await client1.connect()
     await client2.connect()
 
-    const client1FooBarTopicSubscription = client1.subscribe('fooBar', fooBarReducer)
-    const client2FooBarTopicSubscription = client2.subscribe('fooBar', fooBarReducer)
+    const client1FooBarTopic = client1.subscribe('fooBar', fooBarReducer)
+    const client2FooBarTopic = client2.subscribe('fooBar', fooBarReducer)
 
     const stateUpdatesClient1: FooBarState[] = []
     const stateUpdatesClient2: FooBarState[] = []
 
-    const client1FooBarTopicChangeHandler = client1FooBarTopicSubscription.addHandler(state => {
+    client1FooBarTopic.addHandler(state => {
       stateUpdatesClient1.push(state)
     })
 
-    const client2FooBarTopicChangeHandler = client2FooBarTopicSubscription.addHandler(state => {
+    client2FooBarTopic.addHandler(state => {
       stateUpdatesClient2.push(state)
     })
 
     await wait(100)
 
-    const setFoo = (val: boolean): FooBarActions & { topic: 'fooBar' } => ({
-      topic: 'fooBar',
+    const setFoo = (val: boolean): FooBarActions => ({
       type: 'setFoo',
       payload: {
         foo: val,
       },
     })
 
-    const setBar = (val: boolean): FooBarActions & { topic: 'fooBar' } => ({
-      topic: 'fooBar',
+    const setBar = (val: boolean): FooBarActions => ({
       type: 'setBar',
       payload: {
         bar: val,
       },
     })
 
-    client1.dispatch(setFoo(true))
-    client2.dispatch(setBar(true))
-    client2.dispatch(setBar(false))
-    client2.dispatch(setFoo(false))
+    client1FooBarTopic.dispatch(setFoo(true))
+    client2FooBarTopic.dispatch(setBar(true))
+    client2FooBarTopic.dispatch(setBar(false))
+    client2FooBarTopic.dispatch(setFoo(false))
 
     await wait(500)
 

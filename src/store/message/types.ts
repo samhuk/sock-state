@@ -35,7 +35,7 @@ export type Action = {
   payload: any
 }
 
-export type ActionMessageOptions = Action & {
+export type ActionMessageOptions<TAction extends Action = Action> = TAction & {
   topic: string
 }
 

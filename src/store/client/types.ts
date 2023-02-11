@@ -20,6 +20,7 @@ export type StoreClient = {
     topic: string,
     reducer: Reducer<TState, TAction>
   ) => {
+    dispatch: (action: TAction) => void
     addHandler: (handler: (state: TState) => void) => string
     removeHandler: (handlerUuid: string) => void
   }
