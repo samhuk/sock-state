@@ -1,7 +1,7 @@
 {
-  "name": "intercom",
+  "name": "sock-state",
   "version": "0.0.1",
-  "description": "Intercom",
+  "description": "Redux-like state container over Web Sockets",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -26,7 +26,7 @@
     "clean": "npm run clean-unit-tests && npm run clean-ts && npm run clean-ts-dist",
     "check": "npm run lint-errors-only && npm run build-ts && npm run unit-tests && echo Done!"
   },
-  "repository": "https://github.com/samhuk/intercom",
+  "repository": "https://github.com/samhuk/sock-state",
   "author": "",
   "license": "MIT",
   "publishConfig": {
