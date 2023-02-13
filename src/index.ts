@@ -5,8 +5,6 @@
  * E.g. `import { createPackageName, PackageNameOptions } from 'npm-package-name`
  */
 
-export { createStoreServer } from './store/server'
-export { createNodeStoreClient } from './store/client/node'
-export { createBrowserStoreClient } from './store/client/browser'
+export { createStoreServer } from './server'
 
 export * from './types'

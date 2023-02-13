@@ -1,14 +1,7 @@
-import { createClient } from '.'
-import { Client, NodeClientOptions } from './types'
-import { createNodeWebSocketAdapter } from './webSocketAdapter/node'
+import { createStoreClient } from '.'
+import { createNodeClient } from '../common/client/node'
+import { StoreClientOptions } from './types'
 
-export const createNodeClient = <TMessage extends any>(
-  options: NodeClientOptions<TMessage>,
-): Client<TMessage> => createClient({
-    ...options,
-    wsAdapter: createNodeWebSocketAdapter({
-      deserializer: options.deserializer,
-      serializer: options.serializer,
-      logger: options.logger,
-    }),
-  })
+export const createNodeStoreClient = (options: StoreClientOptions) => createStoreClient(options, createNodeClient)
+
+export default createNodeStoreClient

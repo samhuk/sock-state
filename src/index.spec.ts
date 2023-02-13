@@ -1,100 +1,130 @@
-import { createNodeClient } from './client/node'
-import { createServer } from './server'
-import { wait } from './util/async'
+import { wait } from './common/async'
+import { createNodeStoreClient } from './client/node'
+import { Reducer } from './reducer/types'
+import { createStoreServer } from './server'
 
 describe('e2e', () => {
   test('basic', async () => {
-    const server = createServer({
+    type FooBarState = {
+      foo: boolean
+      bar: boolean
+    }
+
+    type SetFooAction = {
+      type: 'setFoo'
+      payload: {
+        foo: boolean
+      }
+    }
+
+    type SetBarAction = {
+      type: 'setBar'
+      payload: {
+        bar: boolean
+      }
+    }
+
+    type FooBarActions = SetFooAction | SetBarAction
+
+    const INITIAL_FOO_BAR_STATE: FooBarState = {
+      foo: false,
+      bar: false,
+    }
+
+    const fooBarReducer: Reducer<FooBarState, FooBarActions> = (state, action) => {
+      if (state == null)
+        return INITIAL_FOO_BAR_STATE
+
+      switch (action.type) {
+        case 'setFoo':
+          return {
+            ...state,
+            foo: action.payload.foo,
+          }
+        case 'setBar':
+          return {
+            ...state,
+            bar: action.payload.bar,
+          }
+        default:
+          return state
+      }
+    }
+
+    const server = createStoreServer({
       host: 'localhost',
-      port: 4001,
+      port: 4003,
+      topics: {
+        fooBar: {
+          reducer: fooBarReducer as Reducer,
+        },
+      },
     })
 
-    const client = createNodeClient({
+    const client1 = createNodeStoreClient({
       host: 'localhost',
-      port: 4001,
+      port: 4003,
     })
 
-    await client.connect()
+    const client2 = createNodeStoreClient({
+      host: 'localhost',
+      port: 4003,
+    })
 
-    client.send({
-      foo: 'bar',
+    await client1.connect()
+    await client2.connect()
+
+    const client1FooBarTopic = client1.subscribe<FooBarState, FooBarActions>('fooBar')
+    const client2FooBarTopic = client2.subscribe<FooBarState, FooBarActions>('fooBar')
+
+    const stateUpdatesClient1: FooBarState[] = []
+    const stateUpdatesClient2: FooBarState[] = []
+
+    client1FooBarTopic.on('state-change', fooBarReducer, state => {
+      stateUpdatesClient1.push(state)
+    })
+
+    client2FooBarTopic.on('state-change', fooBarReducer, state => {
+      stateUpdatesClient2.push(state)
     })
 
     await wait(100)
 
-    expect(Object.keys(server.getClients()).length).toBe(1)
-
-    await client.disconnect()
-    server.close()
-
-    await wait(500)
-  })
-
-  test('message queuing', async () => {
-    type TestMessage = { i: number }
-    const server = createServer<TestMessage>({
-      host: 'localhost',
-      port: 4002,
+    const setFoo = (val: boolean): FooBarActions => ({
+      type: 'setFoo',
+      payload: {
+        foo: val,
+      },
     })
 
-    const messages: (TestMessage | TestMessage[])[] = []
-    server.on('message', msg => messages.push(JSON.parse(String(msg))))
-
-    const client = createNodeClient<TestMessage>({
-      host: 'localhost',
-      port: 4002,
+    const setBar = (val: boolean): FooBarActions => ({
+      type: 'setBar',
+      payload: {
+        bar: val,
+      },
     })
 
-    client.send({
-      i: 1,
-    })
-
-    client.send({
-      i: 2,
-    })
-
-    await client.connect()
-
-    client.send({
-      i: 3,
-    })
-
-    client.send({
-      i: 4,
-    })
-
-    await wait(100)
-
-    await client.disconnect()
-
-    client.send({
-      i: 5,
-    })
-
-    client.send({
-      i: 6,
-    })
-
-    await client.connect()
+    client1FooBarTopic.dispatch(setFoo(true))
+    client2FooBarTopic.dispatch(setBar(true))
+    client2FooBarTopic.dispatch(setBar(false))
+    client2FooBarTopic.dispatch(setFoo(false))
 
     await wait(500)
 
-    expect(messages).toEqual([
-      [
-        { i: 1 },
-        { i: 2 },
-      ],
-      { i: 3 },
-      { i: 4 },
-      [
-        { i: 5 },
-        { i: 6 },
-      ],
+    expect(stateUpdatesClient1).toEqual([
+      { foo: false, bar: false }, // Initial state
+      { foo: true, bar: false }, // Client 1 updates foo
+      { foo: true, bar: true }, // Client 2 update bar
+      { foo: true, bar: false }, // Client 2 update bar
+      { foo: false, bar: false }, // Client 2 update foo
     ])
 
-    await client.disconnect()
-    await wait(100)
+    expect(stateUpdatesClient2).toEqual(stateUpdatesClient1)
+
+    await client1.disconnect()
+    await client2.disconnect()
     server.close()
+
     await wait(100)
   })
 })

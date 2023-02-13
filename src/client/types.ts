@@ -1,69 +1,49 @@
-import { ConnectionStatus } from '../util/connectionStatus'
-import { Logger } from '../util/logging'
-import { WebSocketAdapter, WebSocketAdapterOnFn } from './webSocketAdapter/types'
+import { Client } from '../common/client/types'
+import { Action, ActionMessageOptions, Message } from '../message/types'
+import { Reducer } from '../reducer/types'
 
-export type ExtractMessageTypeFromOptions<
-  TClientOptions extends { deserializer?: any }
-> = TClientOptions extends { deserializer: any }
-  ? TClientOptions['deserializer'] extends (msg: string) => any
-    ? ReturnType<TClientOptions['deserializer']>
-    : any
-  : any
+export type ClientTopicHandlerEventName = 'get-state' | 'state-change' | 'action'
 
-export type WebSocketEventName = 'connect' | 'disconnect' | 'message' | 'connection-status-change'
-
-export type WebSocketEventHandlerMap<TMessage extends any = any> = {
-  connect: () => void
-  disconnect: () => void
-  'connection-status-change': (newStatus: ConnectionStatus, prevStatus: ConnectionStatus) => void
-  message: (msg: TMessage | TMessage[]) => void
+export type ClientTopicHandlerMap<TState extends any, TAction extends Action> = {
+  'get-state': (state: TState) => void
+  'state-change': (state: TState) => void
+  action: (action: TAction | TAction[]) => void
 }
 
-export type ClientOptions<
-  TMessage extends any = any
-> = {
+export type ClientCreator = (options: { host: string, port: number }) => Client<Message>
+
+export type StoreClientOptions = {
   host: string
   port: number
-  wsAdapter: WebSocketAdapter<TMessage>
-  /**
-   * @default JSON.parse()
-   */
-  deserializer?: (msg: string) => TMessage
-  /**
-   * @default JSON.stringify()
-   */
-  serializer?: (msg: TMessage) => string
-  logger?: Logger
 }
 
-export type Client<
-  TMessage extends any = any
+export type TopicSubscriptionOnFnArgsMap<TState extends any, TAction extends Action> = {
+  'get-state': [handler: ClientTopicHandlerMap<TState, TAction>['get-state']]
+  'state-change': [reducer: Reducer<TState, TAction>, handler: ClientTopicHandlerMap<TState, TAction>['state-change']]
+  action: [handler: ClientTopicHandlerMap<TState, TAction>['action']]
+}
+
+export type TopicSubscription<
+  TState extends any = any,
+  TAction extends Action = Action,
 > = {
-  connectionStatus: ConnectionStatus
+  dispatch: (action: TAction) => void
+  /**
+   * @returns Handler UUID
+   */
+  on: <TEventName extends ClientTopicHandlerEventName>(
+    eventName: TEventName,
+    ...args: TopicSubscriptionOnFnArgsMap<TState, TAction>[TEventName]
+  ) => string
+  off: (handlerUuid: string) => void
+}
+
+export type StoreClient = {
   connect: () => Promise<void>
-  send: (msg: TMessage) => void
   disconnect: () => Promise<void>
-  once: WebSocketAdapterOnFn<TMessage>
-  on: WebSocketAdapterOnFn<TMessage>
-  off: (uuid: string) => void
+  dispatch: (action: ActionMessageOptions) => void
+  subscribe: <
+    TState extends any,
+    TAction extends Action
+  >(topic: string) => TopicSubscription<TState, TAction>
 }
-
-export type BrowserClientOptions<
-  TMessage extends any = any
-> = {
-  host: string
-  port: number
-  /**
-   * @default JSON.parse()
-   */
-  deserializer?: (msg: string) => TMessage
-  /**
-   * @default JSON.stringify()
-   */
-  serializer?: (msg: TMessage) => string
-  logger?: Logger
-}
-
-export type NodeClientOptions<
-  TMessage extends any = any
-> = BrowserClientOptions<TMessage>

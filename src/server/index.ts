@@ -1,41 +1,58 @@
-import { WebSocketServer } from 'ws'
-import { DEFAULT_LOGGER } from '../client/webSocketAdapter/common'
-import { createListenerStore } from '../listenerStore'
-import { createClientStore } from './clientStore'
-import { Server, ServerEventNameHandlerMap, ServerEventNames, ServerOptions } from './types'
+import { createServer } from '../common/server'
+import { Client } from '../common/server/clientStore/types'
+import { sortMessagesByType } from '../message'
+import { Message, MessageType, SubscribeMessage } from '../message/types'
+import { createTopicStore } from './topicStore'
+import { StoreServer, StoreServerOptions } from './types'
 
-export const createServer = <
-  TMessage extends any = any
->(options: ServerOptions): Server<TMessage> => {
-  const logger = options.logger ?? DEFAULT_LOGGER
+export const createStoreServer = (options: StoreServerOptions): StoreServer => {
+  const server = createServer({
+    host: options.host,
+    port: options.port,
+  })
 
-  const listenerStore = createListenerStore<ServerEventNames, ServerEventNameHandlerMap<TMessage>>()
+  const topicStore = createTopicStore({
+    topics: options.topics,
+  })
 
-  logger.log(`Creating web socket server at ws://${options.host}:${options.port}`)
-  const wss = new WebSocketServer({ host: options.host, port: options.port })
-  const clientStore = createClientStore()
+  const processSubscribeMessage = (msg: SubscribeMessage, senderClient: Client) => {
+    const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
+    topicNames.forEach(topicName => topicStore.addSubscriber(topicName, senderClient))
+  }
 
-  wss.on('connection', (ws, req) => {
-    const client = clientStore.add({ ws })
-    listenerStore.call('connect', client)
-    logger.log(`${client.shortUuid} connected (${clientStore.count} clients).`)
+  const processMessage = (msgs: Message | Message[], senderClient: Client) => {
+    if (Array.isArray(msgs)) {
+      const messagesByType = sortMessagesByType(msgs)
+      messagesByType.subscribe.forEach(msg => processSubscribeMessage(msg, senderClient))
+      topicStore.digest(messagesByType.action)
+    }
+    else {
+      switch (msgs.type) {
+        case MessageType.SUBSCRIBE: {
+          processSubscribeMessage(msgs, senderClient)
+          break
+        }
+        case MessageType.ACTION: {
+          topicStore.digest(msgs)
+          break
+        }
+        default:
+          break
+      }
+    }
+  }
 
-    ws.on('message', msgData => {
-      listenerStore.call('message', msgData as any, client)
-    })
+  server.on('message', (rawData, senderClient) => {
+    const msgs = JSON.parse(String(rawData)) as Message | Message[]
+    processMessage(msgs, senderClient)
+  })
 
-    ws.on('close', code => {
-      listenerStore.call('disconnect', client)
-      clientStore.remove(client.uuid)
-      logger.log(`${client.shortUuid} disconnected (${clientStore.count} clients) (code: ${code}).`)
-    })
+  server.on('disconnect', client => {
+    topicStore.removeSubscriber(client.uuid)
   })
 
   return {
-    getClients: () => clientStore.clients,
-    close: () => wss.close(),
-    once: (eventName, handler) => listenerStore.add(eventName, handler as any, { removeOnceCalled: true }),
-    on: (eventName, handler) => listenerStore.add(eventName, handler as any),
-    off: listenerUuid => listenerStore.remove(listenerUuid),
+    server,
+    close: () => server.close(),
   }
 }

@@ -1,0 +1,16 @@
+.message-list-wrapper {
+
+}
+
+.message-list-wrapper .item {
+  margin-bottom: 10px;
+}
+
+.message-list-wrapper .item .from {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.send-msg-form input {
+  margin-right: 10px;
+}
