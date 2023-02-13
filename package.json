@@ -12,23 +12,36 @@
     "build-unit-tests": "tsc -p ./tsconfig.unit-tests.json",
     "run-unit-tests": "jest",
     "unit-tests": "npm run clean-unit-tests && npm run build-unit-tests && npm run run-unit-tests",
+    
     "lint": "eslint -c .eslintrc.json ./src --ext .ts",
     "lint-errors-only": "eslint -c .eslintrc.json ./src --ext .ts --quiet",
+
     "clean-ts-dist": "rimraf ./dist",
     "build-ts-dist": "npm run clean-ts-dist && tsc -p ./tsconfig.dist.json",
+
     "clean-ts": "rimraf ./build-ts",
     "build-ts": "npm run clean-ts && tsc -p ./tsconfig.all.json",
+
+    "clean": "npm run clean-unit-tests && npm run clean-ts && npm run clean-ts-dist",
+    "check": "npm run lint-errors-only && npm run build-ts && npm run unit-tests && echo Done!",
+
     "build-chat-app-client": "esbuild \"./examples/chat-app/client/index.ts\" --outfile=\"./examples/chat-app/build/client/index.js\" --bundle --platform=browser",
     "build-chat-app-server": "esbuild \"./examples/chat-app/server/index.ts\" --outfile=\"./examples/chat-app/build/server/index.js\" --bundle --format=cjs --platform=node",
     "build-chat-app": "npm run build-chat-app-client && npm run build-chat-app-server",
     "run-chat-app": "node ./examples/chat-app/build/server/index.js",
-    "chat-app": "npm run build-chat-app && npm run run-chat-app",
-    "clean": "npm run clean-unit-tests && npm run clean-ts && npm run clean-ts-dist",
-    "check": "npm run lint-errors-only && npm run build-ts && npm run unit-tests && echo Done!"
+    "chat-app": "npm run build-chat-app && npm run run-chat-app"
   },
   "repository": "https://github.com/samhuk/sock-state",
-  "author": "",
+  "author": {
+    "name": "Sam Hughes",
+    "email": "samhughes1701@hotmail.co.uk",
+    "url": "https://linktr.ee/samhuk"
+  },
   "license": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/samhuk"
+  },
   "publishConfig": {
     "access": "public"
   },
