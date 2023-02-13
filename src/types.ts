@@ -5,4 +5,7 @@
  * E.g. `import { PackageNameOptions } from 'npm-package-name`
  */
 
-export type { StoreServer } from './store/server/types'
+export type { StoreServer } from './server/types'
+export type { StoreClient } from './client/types'
+export type { Reducer } from './reducer/types'
+export type { Action } from './message/types'
