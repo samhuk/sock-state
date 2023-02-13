@@ -74,8 +74,8 @@ describe('e2e', () => {
     await client1.connect()
     await client2.connect()
 
-    const client1FooBarTopic = client1.subscribe<FooBarState, FooBarActions>('fooBar')
-    const client2FooBarTopic = client2.subscribe<FooBarState, FooBarActions>('fooBar')
+    const client1FooBarTopic = client1.topic<FooBarState, FooBarActions>('fooBar')
+    const client2FooBarTopic = client2.topic<FooBarState, FooBarActions>('fooBar')
 
     const stateUpdatesClient1: FooBarState[] = []
     const stateUpdatesClient2: FooBarState[] = []

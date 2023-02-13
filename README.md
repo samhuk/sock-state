@@ -19,7 +19,7 @@
 
 Sock State allows you to create [Redux](https://redux.js.org/)-like stores that can be updated and subscribed to over [Web Sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API).
 
-Sock State breaks down your state into **Topics**. Clients dispatch **Actions** to Topics to update it's state. Actions to Topics are broadcasted to all subscribers of the Topic, notifying them of state changes.
+Sock State breaks down your state into **Topics**. Clients dispatch **Actions** to Topics to update it's state. Actions dispatched to Topics are broadcasted to all subscribers of that Topic, notifying them of state changes.
 
 ## Usage Overview
 
@@ -30,15 +30,21 @@ import { createNodeStoreClient } from 'sock-state/lib/client/node'
 // Declare reducer for server and client
 export const chatAppReducer = (state, action) => {
   if (state == null)
-    return { chatMsgs: [] }
+    return { messages: [] }
 
   switch (action.type) {
-    case 'addChatMessage':
-      return { chatMsgs: state.chatMessages.concat(action.payload) }
+    case 'addMessage':
+      return { messages: state.messages.concat(action.payload) }
     default:
       return state
   }
 }
+
+// Declare action creators
+const addMessage = (message: string) => ({
+  type: 'addMessage',
+  payload: message,
+})
 
 // Create server for websockets and state
 const server = createStoreServer({
@@ -54,20 +60,20 @@ client1.connect()
 client2.connect()
 
 // Subscribe clients to topic actions
-const client1ChatAppTopic = storeClient.subscribe('chatApp')
-const client2ChatAppTopic = storeClient.subscribe('chatApp')
+const client1Topic = storeClient.topic('chatApp')
+const client2Topic = storeClient.topic('chatApp')
 
 // Subscribe clients to topic state changes
-client1ChatAppTopic.on('state-change', chatAppReducer, state => {
-  console.log('client 1 new state:', state.chatMsgs)
+client1Topic.on('state-change', chatAppReducer, state => {
+  console.log('client 1 new state:', state.messages)
 })
-client2ChatAppTopic.on('state-change', chatAppReducer, state => {
-  console.log('client 2 new state:', state.chatMsgs)
+client2Topic.on('state-change', chatAppReducer, state => {
+  console.log('client 2 new state:', state.messages)
 })
 
 // Dispatch actions to topics
-client1ChatAppTopic.dispatch({ type: 'addChatMessage', payload: { from: 'client1', text: 'Hey Client 2!' } })
-client2ChatAppTopic.dispatch({ type: 'addChatMessage', payload: { from: 'client1', text: 'Hey Client 1!' } })
+client1Store.dispatch(addMessage('Hello Client 2'))
+client2Topic.dispatch(addMessage('Hello Client 1'))
 ```
 
 ### Examples

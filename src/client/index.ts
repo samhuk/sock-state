@@ -52,7 +52,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
       dateCreated: Date.now(),
       data: action,
     }),
-    subscribe: topicName => {
+    topic: topicName => {
       sendSubscriptionRequest(client, topicName)
 
       const offFns: { [uuid: string]: () => void } = {}

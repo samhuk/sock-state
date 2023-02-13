@@ -1,5 +1,5 @@
 import { createBrowserStoreClient } from '../../../src/client/browser'
-import { addChatMessage, ChatAppActions, chatAppReducer, ChatAppState, ChatMessage, INITIAL_STATE } from '../common'
+import { addChatMessage, ChatAppActions, ChatAppState, ChatMessage, INITIAL_STATE } from '../common'
 
 const createEl = <K extends keyof HTMLElementTagNameMap>(tagName: K, className?: string): HTMLElementTagNameMap[K] => {
   const el = document.createElement(tagName)
@@ -95,7 +95,7 @@ const main = async () => {
 
   storeClient.connect()
 
-  const chatAppTopic = storeClient.subscribe<ChatAppState, ChatAppActions>('chatApp')
+  const chatAppTopic = storeClient.topic<ChatAppState, ChatAppActions>('chatApp')
 
   chatAppTopic.on('get-state', newState => {
     state = newState
@@ -110,9 +110,7 @@ const main = async () => {
   })
 
   const sendMessageForm = createSendMessageForm({
-    onSubmit: text => {
-      chatAppTopic.dispatch(addChatMessage(fromInput.value, text))
-    },
+    onSubmit: text => chatAppTopic.dispatch(addChatMessage(fromInput.value, text)),
   })
 
   rootEl.appendChild(sendMessageForm.el)

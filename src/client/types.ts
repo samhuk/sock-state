@@ -13,7 +13,13 @@ export type ClientTopicHandlerMap<TState extends any, TAction extends Action> = 
 export type ClientCreator = (options: { host: string, port: number }) => Client<Message>
 
 export type StoreClientOptions = {
+  /**
+   * The IP address or host name that the store client will bind to.
+   */
   host: string
+  /**
+   * The port number that the store client will bind to.
+   */
   port: number
 }
 
@@ -27,22 +33,53 @@ export type TopicSubscription<
   TState extends any = any,
   TAction extends Action = Action,
 > = {
+  /**
+   * Dispatch an action to the topic.
+   */
   dispatch: (action: TAction) => void
   /**
+   * Start listening for various events of a topic, such as when an action is dispatched
+   * to it, when the store client receives it's current state, and when it's state changes.
+   *
+   * Subscription to state changes require a reducer to be provided. You should provide the
+   * same one that the store server uses for the topic.
+   *
    * @returns Handler UUID
    */
   on: <TEventName extends ClientTopicHandlerEventName>(
+    /**
+     * The event name to listen to. Available:
+     *
+     * * `get-state` - When the store client receives the topic's current state.
+     * * `state-change` - When the store client receives the topic's current state.
+     * * `action` - When an action is dispatched to the topic (by any client).
+     */
     eventName: TEventName,
     ...args: TopicSubscriptionOnFnArgsMap<TState, TAction>[TEventName]
   ) => string
+  /**
+   * Removes a listener of various events of a topic.
+   */
   off: (handlerUuid: string) => void
 }
 
 export type StoreClient = {
+  /**
+   * Connect the store client to the store server.
+   */
   connect: () => Promise<void>
+  /**
+   * Disconnect the store client from the store server.
+   */
   disconnect: () => Promise<void>
+  /**
+   * Dispatch an action to any topic without necessarily being subscribed to it.
+   */
   dispatch: (action: ActionMessageOptions) => void
-  subscribe: <
+  /**
+   * Subscribe to a topic.
+   */
+  topic: <
     TState extends any,
     TAction extends Action
   >(topic: string) => TopicSubscription<TState, TAction>
