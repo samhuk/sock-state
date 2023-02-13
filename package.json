@@ -2,10 +2,10 @@
   "name": "sock-state",
   "version": "0.0.1",
   "description": "Redux-like state container over Web Sockets",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
-    "dist/**/*"
+    "lib/**/*"
   ],
   "scripts": {
     "clean-unit-tests": "rimraf ./build-test",
@@ -16,13 +16,14 @@
     "lint": "eslint -c .eslintrc.json ./src --ext .ts",
     "lint-errors-only": "eslint -c .eslintrc.json ./src --ext .ts --quiet",
 
-    "clean-ts-dist": "rimraf ./dist",
+    "clean-ts-dist": "rimraf ./lib",
     "build-ts-dist": "npm run clean-ts-dist && tsc -p ./tsconfig.dist.json",
 
     "clean-ts": "rimraf ./build-ts",
     "build-ts": "npm run clean-ts && tsc -p ./tsconfig.all.json",
 
     "clean": "npm run clean-unit-tests && npm run clean-ts && npm run clean-ts-dist",
+
     "check": "npm run lint-errors-only && npm run build-ts && npm run unit-tests && echo Done!",
 
     "build-chat-app-client": "esbuild \"./examples/chat-app/client/index.ts\" --outfile=\"./examples/chat-app/build/client/index.js\" --bundle --platform=browser",

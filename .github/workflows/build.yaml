@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [ master ]
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,6 +16,11 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Build
-      run: |
-        npm run check
+    - name: Install dependencies
+      run: npm install
+    - name: Lint
+      run: npm run lint-errors-only
+    - name: TS Build
+      run: npm run build-ts
+    - name: Unit tests
+      run: npm run unit-tests
