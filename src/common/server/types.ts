@@ -1,6 +1,13 @@
 import { RawData } from 'ws'
-import { Logger } from '../logging'
 import { Client, Clients } from './clientStore/types'
+
+export type ServerReporter = {
+  onBegin?: (options: ServerOptions) => void
+  onCreatingServer?: (options: ServerOptions) => void
+  onClientConnect?: (client: Client, options: ServerOptions) => void
+  onClientMessage?: (msgData: RawData, options: ServerOptions) => void
+  onClientDisconnect?: (client: Client, options: ServerOptions) => void
+}
 
 export type ServerEventNames = 'connect' | 'disconnect' | 'message'
 
@@ -27,7 +34,7 @@ export type OnFn<TMessage extends any = any> = <
 export type ServerOptions = {
   host: string
   port: number
-  logger?: Logger
+  reporter?: ServerReporter
 }
 
 export type Server<

@@ -6,9 +6,14 @@ import { createTopicStore } from './topicStore'
 import { StoreServer, StoreServerOptions } from './types'
 
 export const createStoreServer = (options: StoreServerOptions): StoreServer => {
+  options.reporter?.onBegin?.(options)
   const server = createServer({
     host: options.host,
     port: options.port,
+    reporter: {
+      onCreatingServer: () => options.reporter?.onCreatingServer?.(options),
+      onClientConnect: client => options.reporter?.onClientConnect?.(client, options),
+    },
   })
 
   const topicStore = createTopicStore({
@@ -43,11 +48,14 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
   }
 
   server.on('message', (rawData, senderClient) => {
-    const msgs = JSON.parse(String(rawData)) as Message | Message[]
+    const rawDataStr = String(rawData)
+    options.reporter?.onClientMessage?.(senderClient, rawDataStr, options)
+    const msgs = JSON.parse(rawDataStr) as Message | Message[]
     processMessage(msgs, senderClient)
   })
 
   server.on('disconnect', client => {
+    options.reporter?.onClientDisconnect?.(client, options)
     topicStore.removeSubscriber(client.uuid)
   })
 

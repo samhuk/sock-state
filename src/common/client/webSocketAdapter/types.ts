@@ -1,11 +1,9 @@
 import { ConnectionStatus } from '../../connectionStatus'
-import { Logger } from '../../logging'
 import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
 
 export type WebSocketAdapterOptions = {
   deserializer?: (msg: string) => any
   serializer?: (msg: any) => string
-  logger?: Logger
 }
 
 /**

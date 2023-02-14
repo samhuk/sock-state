@@ -17,6 +17,7 @@ const sendSubscriptionRequest = (client: Client, topicName: string) => {
 }
 
 export const createStoreClient = (options: StoreClientOptions, clientCreator: ClientCreator): StoreClient => {
+  options.reporter?.onBegin?.(options)
   let instance: StoreClient
 
   const topicRecieveStateMsgListeners = createListenerStore<string, { [k: string]:(stateMsg: StateMessage) => void }>()
@@ -29,6 +30,8 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
 
   // Start listening for all messages from store server
   client.on('message', msgs => {
+    options.reporter?.onMessages?.(msgs)
+
     // Sort messages by their type
     const messagesByType = sortMessagesByType(msgs)
 
@@ -44,7 +47,28 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     })
   })
 
+  client.on('connect', (host, port) => {
+    options.reporter?.onConnect?.(host, port)
+  })
+
+  client.on('disconnect', (host, port) => {
+    options.reporter?.onDisconnect?.(host, port)
+  })
+
+  client.on('connect-attempt-fail', (host, port) => {
+    options.reporter?.onConnectAttemptFail?.(host, port)
+  })
+
+  client.on('connect-attempt-start', (host, port) => {
+    options.reporter?.onConnectAttemptStart?.(host, port)
+  })
+
+  client.on('connection-status-change', (newStatus, prevStatus) => {
+    options.reporter?.onConnectionStatusChange?.(newStatus, prevStatus)
+  })
+
   return instance = {
+    getConnectionStatus: () => client.connectionStatus,
     connect: client.connect,
     disconnect: client.disconnect,
     dispatch: action => client.send({

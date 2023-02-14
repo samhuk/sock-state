@@ -9,6 +9,5 @@ export const createNodeClient = <TMessage extends any>(
     wsAdapter: createNodeWebSocketAdapter({
       deserializer: options.deserializer,
       serializer: options.serializer,
-      logger: options.logger,
     }),
   })

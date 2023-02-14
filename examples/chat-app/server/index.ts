@@ -4,6 +4,7 @@ import * as fs from 'fs'
 import { createStoreServer } from '../../../src'
 import { chatAppReducer } from '../common'
 import { Reducer } from '../../../src/reducer/types'
+import { CONSOLE_LOG_SERVER_REPORTER } from '../../../src/server/reporter'
 
 const HTTP_SERVER_HOST = 'localhost'
 const HTTP_SERVER_PORT = 4000
@@ -49,6 +50,7 @@ const main = () => {
         reducer: chatAppReducer as Reducer,
       },
     },
+    reporter: CONSOLE_LOG_SERVER_REPORTER,
   })
 
   const httpServer = createHttpServer((req, res) => {

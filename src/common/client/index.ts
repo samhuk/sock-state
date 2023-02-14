@@ -20,12 +20,20 @@ export const createClient = <TClientOptions extends ClientOptions>(
     listenerStore.call('message', msg)
   })
 
-  options.wsAdapter.on('connect', () => {
-    listenerStore.call('connect')
+  options.wsAdapter.on('connect', (host, port) => {
+    listenerStore.call('connect', host, port)
   })
 
-  options.wsAdapter.on('disconnect', () => {
-    listenerStore.call('disconnect')
+  options.wsAdapter.on('disconnect', (host, port) => {
+    listenerStore.call('disconnect', host, port)
+  })
+
+  options.wsAdapter.on('connect-attempt-fail', (host, port) => {
+    listenerStore.call('connect-attempt-fail', host, port)
+  })
+
+  options.wsAdapter.on('connect-attempt-start', (host, port) => {
+    listenerStore.call('connect-attempt-start', host, port)
   })
 
   return instance = {

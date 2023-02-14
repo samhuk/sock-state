@@ -9,6 +9,5 @@ export const createBrowserClient = <TMessage extends any>(
     wsAdapter: createBrowserWebSocketAdapter({
       deserializer: options.deserializer,
       serializer: options.serializer,
-      logger: options.logger,
     }),
   })

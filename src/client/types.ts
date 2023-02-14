@@ -1,6 +1,8 @@
 import { Client } from '../common/client/types'
+import { ConnectionStatus } from '../common/connectionStatus'
 import { Action, ActionMessageOptions, Message } from '../message/types'
 import { Reducer } from '../reducer/types'
+import { StoreClientReporter } from './reporter/types'
 
 export type ClientTopicHandlerEventName = 'get-state' | 'state-change' | 'action'
 
@@ -21,6 +23,12 @@ export type StoreClientOptions = {
    * The port number that the store client will bind to.
    */
   port: number
+  /**
+   * Optional reporter for the store client.
+   *
+   * This is useful for logging the various events of the store client.
+   */
+  reporter?: StoreClientReporter
 }
 
 export type TopicSubscriptionOnFnArgsMap<TState extends any, TAction extends Action> = {
@@ -64,6 +72,7 @@ export type TopicSubscription<
 }
 
 export type StoreClient = {
+  getConnectionStatus: () => ConnectionStatus
   /**
    * Connect the store client to the store server.
    */

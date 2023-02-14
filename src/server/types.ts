@@ -1,4 +1,5 @@
 import { Server } from '../common/server/types'
+import { StoreServerReporter } from './reporter/types'
 import { TopicOptionsDict } from './topicStore/types'
 
 export type StoreServer = {
@@ -25,4 +26,10 @@ export type StoreServerOptions = {
    * to subscribe to.
    */
   topics: TopicOptionsDict
+  /**
+   * Optional reporter for the store server.
+   *
+   * This is useful for logging the various events of the store server.
+   */
+  reporter?: StoreServerReporter
 }

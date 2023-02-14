@@ -6,5 +6,7 @@
  */
 
 export { createStoreServer } from './server'
+export { CONSOLE_LOG_SERVER_REPORTER } from './server/reporter'
+export { CONSOLE_LOG_CLIENT_REPORTER } from './client/reporter'
 
 export * from './types'

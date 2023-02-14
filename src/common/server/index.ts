@@ -1,5 +1,4 @@
 import { WebSocketServer } from 'ws'
-import { DEFAULT_LOGGER } from '../client/webSocketAdapter/common'
 import { createListenerStore } from '../listenerStore'
 import { createClientStore } from './clientStore'
 import { Server, ServerEventNameHandlerMap, ServerEventNames, ServerOptions } from './types'
@@ -7,27 +6,27 @@ import { Server, ServerEventNameHandlerMap, ServerEventNames, ServerOptions } fr
 export const createServer = <
   TMessage extends any = any
 >(options: ServerOptions): Server<TMessage> => {
-  const logger = options.logger ?? DEFAULT_LOGGER
-
+  options.reporter?.onBegin?.(options)
   const listenerStore = createListenerStore<ServerEventNames, ServerEventNameHandlerMap<TMessage>>()
 
-  logger.log(`Creating web socket server at ws://${options.host}:${options.port}`)
+  options.reporter?.onCreatingServer?.(options)
   const wss = new WebSocketServer({ host: options.host, port: options.port })
   const clientStore = createClientStore()
 
   wss.on('connection', (ws, req) => {
     const client = clientStore.add({ ws })
     listenerStore.call('connect', client)
-    logger.log(`${client.shortUuid} connected (${clientStore.count} clients).`)
+    options.reporter?.onClientConnect?.(client, options)
 
     ws.on('message', msgData => {
+      options.reporter?.onClientMessage?.(msgData, options)
       listenerStore.call('message', msgData as any, client)
     })
 
     ws.on('close', code => {
       listenerStore.call('disconnect', client)
       clientStore.remove(client.uuid)
-      logger.log(`${client.shortUuid} disconnected (${clientStore.count} clients) (code: ${code}).`)
+      options.reporter?.onClientDisconnect?.(client, options)
     })
   })
 

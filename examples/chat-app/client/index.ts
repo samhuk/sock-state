@@ -1,4 +1,5 @@
 import { createBrowserStoreClient } from '../../../src/client/browser'
+import { CONSOLE_LOG_CLIENT_REPORTER } from '../../../src/client/reporter'
 import { addChatMessage, ChatAppActions, ChatAppState, ChatMessage, INITIAL_STATE } from '../common'
 
 const createEl = <K extends keyof HTMLElementTagNameMap>(tagName: K, className?: string): HTMLElementTagNameMap[K] => {
@@ -91,6 +92,7 @@ const main = async () => {
   const storeClient = createBrowserStoreClient({
     host: 'localhost',
     port: 4001,
+    reporter: CONSOLE_LOG_CLIENT_REPORTER,
   })
 
   storeClient.connect()
