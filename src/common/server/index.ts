@@ -11,6 +11,7 @@ export const createServer = <
 
   options.reporter?.onCreatingServer?.(options)
   const wss = new WebSocketServer({ host: options.host, port: options.port })
+  options.reporter?.onCreateServer?.(options)
   const clientStore = createClientStore()
 
   wss.on('connection', (ws, req) => {

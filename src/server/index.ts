@@ -11,6 +11,7 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
     host: options.host,
     port: options.port,
     reporter: {
+      onCreateServer: () => options.reporter?.onCreateServer?.(options),
       onCreatingServer: () => options.reporter?.onCreatingServer?.(options),
       onClientConnect: client => options.reporter?.onClientConnect?.(client, options),
     },

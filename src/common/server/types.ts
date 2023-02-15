@@ -4,6 +4,7 @@ import { Client, Clients } from './clientStore/types'
 export type ServerReporter = {
   onBegin?: (options: ServerOptions) => void
   onCreatingServer?: (options: ServerOptions) => void
+  onCreateServer?: (options: ServerOptions) => void
   onClientConnect?: (client: Client, options: ServerOptions) => void
   onClientMessage?: (msgData: RawData, options: ServerOptions) => void
   onClientDisconnect?: (client: Client, options: ServerOptions) => void
