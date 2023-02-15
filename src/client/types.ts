@@ -71,6 +71,16 @@ export type TopicSubscription<
   off: (handlerUuid: string) => void
 }
 
+export type StoreClientEventName = 'connection-status-change'
+
+export type StoreClientEventHandlerMap= {
+  'connection-status-change': (newStatus: ConnectionStatus, prevStatus: ConnectionStatus) => void
+}
+
+export type StoreClientOnFn = <
+  TEvent extends StoreClientEventName,
+>(event: TEvent, handler: StoreClientEventHandlerMap[TEvent]) => string
+
 export type StoreClient = {
   getConnectionStatus: () => ConnectionStatus
   /**
@@ -85,6 +95,16 @@ export type StoreClient = {
    * Dispatch an action to any topic without necessarily being subscribed to it.
    */
   dispatch: (action: ActionMessageOptions) => void
+  /**
+   * Listen for events.
+   *
+   * @returns Listener UUID
+   */
+  on: StoreClientOnFn
+  /**
+   * Stop a listener.
+   */
+  off: (uuid: string) => void
   /**
    * Subscribe to a topic.
    */

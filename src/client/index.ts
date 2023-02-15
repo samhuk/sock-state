@@ -4,7 +4,14 @@ import { createListenerStore } from '../common/listenerStore'
 import { sortActionMessagesByTopic, sortMessagesByType } from '../message'
 import { ActionMessage, MessageType, StateMessage } from '../message/types'
 import { createTopicStateStore } from './topicStateStore'
-import { ClientCreator, StoreClient, StoreClientOptions, TopicSubscriptionOnFnArgsMap } from './types'
+import {
+  ClientCreator,
+  StoreClient,
+  StoreClientEventHandlerMap,
+  StoreClientEventName,
+  StoreClientOptions,
+  TopicSubscriptionOnFnArgsMap,
+} from './types'
 
 const sendSubscriptionRequest = (client: Client, topicName: string) => {
   client.send({
@@ -22,6 +29,8 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
 
   const topicRecieveStateMsgListeners = createListenerStore<string, { [k: string]:(stateMsg: StateMessage) => void }>()
   const topicRecieveActionMsgsListeners = createListenerStore<string, { [k: string]:(actionMsgs: ActionMessage | ActionMessage[]) => void }>()
+
+  const listenerStore = createListenerStore<StoreClientEventName, StoreClientEventHandlerMap>()
 
   const client = clientCreator({
     host: options.host,
@@ -65,6 +74,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
 
   client.on('connection-status-change', (newStatus, prevStatus) => {
     options.reporter?.onConnectionStatusChange?.(newStatus, prevStatus)
+    listenerStore.call('connection-status-change', newStatus, prevStatus)
   })
 
   return instance = {
@@ -76,6 +86,8 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
       dateCreated: Date.now(),
       data: action,
     }),
+    on: (eventName, handler) => listenerStore.add(eventName, handler),
+    off: handlerUuid => listenerStore.remove(handlerUuid),
     topic: topicName => {
       sendSubscriptionRequest(client, topicName)
 
