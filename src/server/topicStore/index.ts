@@ -12,6 +12,7 @@ export const createTopicStore = (options: TopicStoreOptions): TopicStore => {
   })
 
   return instance = {
+    getTopic: topicName => topics[topicName],
     addSubscriber: (topicName, client) => topics[topicName]?.addSubscriber(client),
     removeSubscriber: clientUuid => {
       Object.values(topics).forEach(topic => topic.removeSubscriber(clientUuid))

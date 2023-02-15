@@ -23,7 +23,10 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
 
   const processSubscribeMessage = (msg: SubscribeMessage, senderClient: Client) => {
     const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
-    topicNames.forEach(topicName => topicStore.addSubscriber(topicName, senderClient))
+    topicNames.forEach(topicName => {
+      topicStore.addSubscriber(topicName, senderClient)
+      options.reporter?.onClientSubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
+    })
   }
 
   const processMessage = (msgs: Message | Message[], senderClient: Client) => {

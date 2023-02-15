@@ -17,6 +17,8 @@ export type TopicOptions<
 }
 
 export type Topic<TState extends any = any> = {
+  name: string
+  getNumSubscribers: () => number
   getState: () => TState
   addSubscriber: (client: Client) => Subscriber
   removeSubscriber: (clientUuid: string) => void

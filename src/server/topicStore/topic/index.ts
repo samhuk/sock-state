@@ -12,6 +12,8 @@ export const createTopic = <TState extends any>(
   const stateStore = createStateStore({ reducer: options.reducer })
 
   return instance = {
+    name,
+    getNumSubscribers: () => subscriberStore.numSubscribers,
     getState: () => stateStore.state,
     addSubscriber: client => {
       const subscriber = subscriberStore.add({ client })
