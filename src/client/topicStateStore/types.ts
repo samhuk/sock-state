@@ -8,7 +8,7 @@ export type ClientTopic = {
 
 export type ClientTopicStateStoreOptions<TState extends any = any> = {
   reducer: Reducer<TState>
-  onStateChange: (state: TState) => void
+  onStateChange: (state: TState, isGetInitialState: boolean) => void
 }
 
 export type ClientTopicStateStore<TState extends any = any> = ClientTopic & {

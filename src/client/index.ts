@@ -109,7 +109,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
 
             const topicStateStore = createTopicStateStore({
               reducer,
-              onStateChange: state => handler(state),
+              onStateChange: (state, isGetInitialState) => handler(state, isGetInitialState),
             })
 
             const stateMsgListenerUuid = topicRecieveStateMsgListeners.add(topicName, stateMsg => topicStateStore.digestStateMsg(stateMsg))

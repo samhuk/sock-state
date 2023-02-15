@@ -8,7 +8,7 @@ export type ClientTopicHandlerEventName = 'get-state' | 'state-change' | 'action
 
 export type ClientTopicHandlerMap<TState extends any, TAction extends Action> = {
   'get-state': (state: TState) => void
-  'state-change': (state: TState) => void
+  'state-change': (state: TState, isGetInitialState: boolean) => void
   action: (action: TAction | TAction[]) => void
 }
 

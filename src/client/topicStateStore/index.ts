@@ -18,13 +18,13 @@ export const createTopicStateStore = (options: ClientTopicStateStoreOptions): Cl
       }
       else {
         stateStore.digest(msgs)
-        options.onStateChange(stateStore.state)
+        options.onStateChange(stateStore.state, false)
       }
     },
     digestStateMsg: msg => {
       stateStore.set(msg.data.state)
       stateStore.digest(preLoadedActionMsgs)
-      options.onStateChange(stateStore.state)
+      options.onStateChange(stateStore.state, true)
       instance.loaded = true
     },
   }
