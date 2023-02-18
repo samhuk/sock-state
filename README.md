@@ -72,7 +72,7 @@ client2Topic.on('state-change', chatAppReducer, state => {
 })
 
 // Dispatch actions to topics
-client1Store.dispatch(addMessage('Hello Client 2'))
+client2Topic.dispatch(addMessage('Hello Client 2'))
 client2Topic.dispatch(addMessage('Hello Client 1'))
 ```
 
