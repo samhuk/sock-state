@@ -1,5 +1,7 @@
-import { Client } from '../../common/server/clientStore/types'
 import { ActionMessage } from '../../message/types'
+import { Client } from '../../common/server/clientStore/types'
+
+export type AddSubscriberResult = { isNew: boolean, subscriber: Subscriber }
 
 export type SubscriberOptions = {
   client: Client
@@ -17,7 +19,10 @@ export type Subscribers = {
 export type SubscriberStore = {
   numSubscribers: number
   subscribers: Subscribers
-  add: (subscriber: SubscriberOptions) => Subscriber
-  remove: (clientUuid: string) => void
+  add: (subscriber: SubscriberOptions) => AddSubscriberResult
+  /**
+   * @returns `true` if subscriber existed, `false` if it didn't exist.
+   */
+  remove: (clientUuid: string) => boolean
   broadcast: (msg: ActionMessage | ActionMessage[]) => void
 }

@@ -1,17 +1,21 @@
-import { v4 as uuidv4 } from 'uuid'
-import { Client } from '../common/client/types'
-import { createListenerStore } from '../common/listenerStore'
-import { sortActionMessagesByTopic, sortMessagesByType } from '../message'
-import { ActionMessage, MessageType, StateMessage } from '../message/types'
-import { createTopicStateStore } from './topicStateStore'
+import { ActionMessage, Message, MessageType, StateMessage } from '../message/types'
 import {
   ClientCreator,
   StoreClient,
   StoreClientEventHandlerMap,
   StoreClientEventName,
   StoreClientOptions,
+  TopicSubscription,
   TopicSubscriptionOnFnArgsMap,
 } from './types'
+import { sortActionMessagesByTopic, sortMessagesByType } from '../message'
+
+import { Client } from '../common/client/types'
+import { ListenerStore } from '../common/listenerStore/types'
+import { createListenerStore } from '../common/listenerStore'
+import { createTopicStateStore } from './topicStateStore'
+// eslint-disable-next-line import/order
+import { v4 as uuidv4 } from 'uuid'
 
 const sendSubscriptionRequest = (client: Client, topicName: string) => {
   client.send({
@@ -21,6 +25,93 @@ const sendSubscriptionRequest = (client: Client, topicName: string) => {
       topics: topicName,
     },
   })
+}
+
+const createTopicSubscription = (
+  topicName: string,
+  client: Client<Message>,
+  topicRecieveStateMsgListeners: ListenerStore<string, { [k: string]: (stateMsg: StateMessage) => void }>,
+  topicRecieveActionMsgsListeners: ListenerStore<string, { [k: string]: (actionMsgs: ActionMessage | ActionMessage[]) => void }>,
+): TopicSubscription => {
+  sendSubscriptionRequest(client, topicName)
+
+  const offFns: { [uuid: string]: () => void } = {}
+
+  return {
+    dispatch: action => client.send({
+      type: MessageType.ACTION,
+      dateCreated: Date.now(),
+      data: {
+        topic: topicName,
+        type: action.type,
+        payload: action.payload,
+      },
+    }),
+    on: (eventName, ...args) => {
+      if (eventName === 'state-change') {
+        const [reducer, handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['state-change']
+
+        const topicStateStore = createTopicStateStore({
+          reducer,
+          onStateChange: (state, isGetInitialState) => handler(state, isGetInitialState),
+        })
+
+        const stateMsgListenerUuid = topicRecieveStateMsgListeners.add(topicName, stateMsg => topicStateStore.digestStateMsg(stateMsg))
+        const actionMsgsListenerUuid = topicRecieveActionMsgsListeners.add(topicName, actionMsgs => topicStateStore.digestActionMsgs(actionMsgs))
+
+        const offFnUuid = uuidv4()
+        offFns[offFnUuid] = () => {
+          topicRecieveStateMsgListeners.remove(stateMsgListenerUuid)
+          topicRecieveActionMsgsListeners.remove(actionMsgsListenerUuid)
+        }
+        return offFnUuid
+      }
+
+      if (eventName === 'get-state') {
+        const [handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['get-state']
+
+        const stateMsgListenerUuid = topicRecieveStateMsgListeners.add(topicName, stateMsg => handler(stateMsg.data.state))
+
+        offFns[stateMsgListenerUuid] = () => {
+          topicRecieveStateMsgListeners.remove(stateMsgListenerUuid)
+        }
+        return stateMsgListenerUuid
+      }
+
+      if (eventName === 'action') {
+        const [handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['action']
+
+        const actionMsgsListenerUuid = topicRecieveActionMsgsListeners.add(topicName, actionMsgs => {
+          if (Array.isArray(actionMsgs)) {
+            const actions = actionMsgs.map(actionMsg => actionMsg.data)
+            handler(actions)
+          }
+          else {
+            handler(actionMsgs.data)
+          }
+        })
+
+        offFns[actionMsgsListenerUuid] = () => {
+          topicRecieveActionMsgsListeners.remove(actionMsgsListenerUuid)
+        }
+        return actionMsgsListenerUuid
+      }
+      return null
+    },
+    off: handlerUuid => offFns[handlerUuid]?.(),
+    unsubscribe: () => {
+      // Remove the topic message listener functions first so that no more will be received
+      Object.values(offFns).forEach(offFn => offFn())
+      // Send message to server to unsubscribe, removing this topic subscription from the topic subscribers pool.
+      client.send({
+        type: MessageType.UNSUBSCRIBE,
+        dateCreated: Date.now(),
+        data: {
+          topics: topicName,
+        },
+      })
+    },
+  }
 }
 
 export const createStoreClient = (options: StoreClientOptions, clientCreator: ClientCreator): StoreClient => {
@@ -88,74 +179,6 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     }),
     on: (eventName, handler) => listenerStore.add(eventName, handler),
     off: handlerUuid => listenerStore.remove(handlerUuid),
-    topic: topicName => {
-      sendSubscriptionRequest(client, topicName)
-
-      const offFns: { [uuid: string]: () => void } = {}
-
-      return {
-        dispatch: action => client.send({
-          type: MessageType.ACTION,
-          dateCreated: Date.now(),
-          data: {
-            topic: topicName,
-            type: action.type,
-            payload: action.payload,
-          },
-        }),
-        on: (eventName, ...args) => {
-          if (eventName === 'state-change') {
-            const [reducer, handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['state-change']
-
-            const topicStateStore = createTopicStateStore({
-              reducer,
-              onStateChange: (state, isGetInitialState) => handler(state, isGetInitialState),
-            })
-
-            const stateMsgListenerUuid = topicRecieveStateMsgListeners.add(topicName, stateMsg => topicStateStore.digestStateMsg(stateMsg))
-            const actionMsgsListenerUuid = topicRecieveActionMsgsListeners.add(topicName, actionMsgs => topicStateStore.digestActionMsgs(actionMsgs))
-
-            const offFnUuid = uuidv4()
-            offFns[offFnUuid] = () => {
-              topicRecieveStateMsgListeners.remove(stateMsgListenerUuid)
-              topicRecieveActionMsgsListeners.remove(actionMsgsListenerUuid)
-            }
-            return offFnUuid
-          }
-
-          if (eventName === 'get-state') {
-            const [handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['get-state']
-
-            const stateMsgListenerUuid = topicRecieveStateMsgListeners.add(topicName, stateMsg => handler(stateMsg.data.state))
-
-            offFns[stateMsgListenerUuid] = () => {
-              topicRecieveStateMsgListeners.remove(stateMsgListenerUuid)
-            }
-            return stateMsgListenerUuid
-          }
-
-          if (eventName === 'action') {
-            const [handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['action']
-
-            const actionMsgsListenerUuid = topicRecieveActionMsgsListeners.add(topicName, actionMsgs => {
-              if (Array.isArray(actionMsgs)) {
-                const actions = actionMsgs.map(actionMsg => actionMsg.data)
-                handler(actions)
-              }
-              else {
-                handler(actionMsgs.data)
-              }
-            })
-
-            offFns[actionMsgsListenerUuid] = () => {
-              topicRecieveActionMsgsListeners.remove(actionMsgsListenerUuid)
-            }
-            return actionMsgsListenerUuid
-          }
-          return null
-        },
-        off: handlerUuid => offFns[handlerUuid]?.(),
-      }
-    },
+    topic: topicName => createTopicSubscription(topicName, client, topicRecieveStateMsgListeners, topicRecieveActionMsgsListeners),
   }
 }

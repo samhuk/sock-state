@@ -1,6 +1,8 @@
-import { createBrowserStoreClient } from '../../../src/client/browser'
+import { AddChatMessageAction, ChatAppState, ChatMessage, addChatMessage } from '../common'
+
 import { CONSOLE_LOG_CLIENT_REPORTER } from '../../../src/client/reporter'
-import { addChatMessage, ChatAppActions, ChatAppState, ChatMessage, INITIAL_STATE } from '../common'
+import { TopicSubscription } from '../../../src/client/types'
+import { createBrowserStoreClient } from '../../../src/client/browser'
 
 const createEl = <K extends keyof HTMLElementTagNameMap>(tagName: K, className?: string): HTMLElementTagNameMap[K] => {
   const el = document.createElement(tagName)
@@ -33,12 +35,14 @@ const createMessageList = () => {
     msgListEl.appendChild(msgEl)
   }
 
-  const addChatMsgs = (msgs: ChatMessage[]) => msgs.forEach(addChatMsg)
-
   return {
     el,
-    addChatMsgs,
+    addChatMsgs: (msgs: ChatMessage[]) => msgs.forEach(addChatMsg),
     addChatMsg,
+    removeAllChatMsgs: () => {
+      while (msgListEl.childElementCount > 0)
+        msgListEl.firstElementChild.remove()
+    },
   }
 }
 
@@ -69,25 +73,42 @@ const createSendMessageForm = (options: {
 
   return {
     el,
+    setEnabled: (newEnabled: boolean) => {
+      button.disabled = !newEnabled
+      msgTextInput.disabled = !newEnabled
+    },
   }
 }
 
-const main = async () => {
-  let state: ChatAppState = INITIAL_STATE
+const bindTopicToState = (
+  topicSubscription: TopicSubscription<ChatAppState, AddChatMessageAction>,
+  messageList: any,
+) => {
+  topicSubscription.on('get-state', newState => {
+    messageList.removeAllChatMsgs()
+    messageList.addChatMsgs(newState.chatMessages)
+  })
 
+  topicSubscription.on('action', actions => {
+    const chatMessages = Array.isArray(actions)
+      ? actions.map(a => a.payload.chatMessage)
+      : [actions.payload.chatMessage]
+    messageList.addChatMsgs(chatMessages)
+  })
+}
+
+const main = async () => {
   const rootEl = document.getElementById('app')
 
   const messageList = createMessageList()
+  let topicSubscription: TopicSubscription<ChatAppState, AddChatMessageAction>
 
   const fromLabel = createEl('label', 'from-label')
   fromLabel.textContent = 'Username:'
   const fromInput = createEl('input')
   fromInput.type = 'text'
-
-  rootEl.appendChild(fromLabel)
-  rootEl.appendChild(fromInput)
-
-  rootEl.appendChild(messageList.el)
+  const toggleTopicSubscribedButton = createEl('button', 'toggle-topic-subscribed-button')
+  toggleTopicSubscribedButton.textContent = 'Unsubscribe'
 
   const storeClient = createBrowserStoreClient({
     host: 'localhost',
@@ -95,26 +116,34 @@ const main = async () => {
     reporter: CONSOLE_LOG_CLIENT_REPORTER,
   })
 
-  storeClient.connect()
-
-  const chatAppTopic = storeClient.topic<ChatAppState, ChatAppActions>('chatApp')
-
-  chatAppTopic.on('get-state', newState => {
-    state = newState
-    messageList.addChatMsgs(newState.chatMessages)
-  })
-
-  chatAppTopic.on('action', actions => {
-    const chatMessages = Array.isArray(actions)
-      ? actions.map(a => a.payload.chatMessage)
-      : [actions.payload.chatMessage]
-    messageList.addChatMsgs(chatMessages)
-  })
+  await storeClient.connect()
 
   const sendMessageForm = createSendMessageForm({
-    onSubmit: text => chatAppTopic.dispatch(addChatMessage(fromInput.value, text)),
+    onSubmit: text => topicSubscription.dispatch(addChatMessage(fromInput.value, text)),
   })
 
+  toggleTopicSubscribedButton.addEventListener('click', () => {
+    if (topicSubscription == null) {
+      topicSubscription = storeClient.topic('chatApp')
+      bindTopicToState(topicSubscription, messageList)
+      toggleTopicSubscribedButton.textContent = 'Unsubscribe'
+      sendMessageForm.setEnabled(true)
+    }
+    else {
+      topicSubscription.unsubscribe()
+      toggleTopicSubscribedButton.textContent = 'Subscribe'
+      sendMessageForm.setEnabled(false)
+      topicSubscription = null
+    }
+  })
+
+  topicSubscription = storeClient.topic('chatApp')
+  bindTopicToState(topicSubscription, messageList)
+
+  rootEl.appendChild(fromLabel)
+  rootEl.appendChild(fromInput)
+  rootEl.appendChild(toggleTopicSubscribedButton)
+  rootEl.appendChild(messageList.el)
   rootEl.appendChild(sendMessageForm.el)
 }
 

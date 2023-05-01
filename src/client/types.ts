@@ -1,6 +1,7 @@
+import { Action, ActionMessageOptions, Message } from '../message/types'
+
 import { Client } from '../common/client/types'
 import { ConnectionStatus } from '../common/connectionStatus'
-import { Action, ActionMessageOptions, Message } from '../message/types'
 import { Reducer } from '../reducer/types'
 import { StoreClientReporter } from './reporter/types'
 
@@ -69,6 +70,10 @@ export type TopicSubscription<
    * Removes a listener of various events of a topic.
    */
   off: (handlerUuid: string) => void
+  /**
+   * Unsubscribes from from topic. This will stop all new events being received.
+   */
+  unsubscribe: () => void
 }
 
 export type StoreClientEventName = 'connection-status-change'

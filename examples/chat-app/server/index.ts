@@ -1,10 +1,13 @@
-import { createServer as createHttpServer, ServerResponse } from 'http'
-import path from 'path'
 import * as fs from 'fs'
-import { createStoreServer } from '../../../src'
-import { chatAppReducer } from '../common'
-import { Reducer } from '../../../src/reducer/types'
+
+import { ServerResponse, createServer as createHttpServer } from 'http'
+
 import { CONSOLE_LOG_SERVER_REPORTER } from '../../../src/server/reporter'
+import { Reducer } from '../../../src/reducer/types'
+import { chatAppReducer } from '../common'
+import { createStoreServer } from '../../../src'
+// eslint-disable-next-line import/order
+import path from 'path'
 
 const HTTP_SERVER_HOST = 'localhost'
 const HTTP_SERVER_PORT = 4000

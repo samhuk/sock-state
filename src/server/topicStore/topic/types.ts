@@ -1,7 +1,8 @@
-import { Client } from '../../../common/server/clientStore/types'
 import { Action, ActionMessage } from '../../../message/types'
+
+import { AddSubscriberResult } from '../../subscriberStore/types'
+import { Client } from '../../../common/server/clientStore/types'
 import { Reducer } from '../../../reducer/types'
-import { Subscriber } from '../../subscriberStore/types'
 
 export type TopicOptionsWithoutName<
   TState extends any = any,
@@ -20,7 +21,10 @@ export type Topic<TState extends any = any> = {
   name: string
   getNumSubscribers: () => number
   getState: () => TState
-  addSubscriber: (client: Client) => Subscriber
-  removeSubscriber: (clientUuid: string) => void
+  subscribeClient: (client: Client) => AddSubscriberResult
+  /**
+   * @returns `true` if given client was subscribed to the given topic, `false` if it wasn't.
+   */
+  unsubscribeClient: (clientUuid: string) => boolean
   digest: (actions: ActionMessage | ActionMessage[]) => void
 }

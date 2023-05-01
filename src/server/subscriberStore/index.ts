@@ -7,17 +7,17 @@ export const createSubscriberStore = (): SubscriberStore => {
     numSubscribers: 0,
     subscribers: {},
     add: subscriberOptions => {
-      const uuidAlreadyExists = subscriberOptions.client.uuid in instance.subscribers
-      const subscriber: Subscriber = {
+      const existingSubscriber = instance.subscribers[subscriberOptions.client.uuid]
+      if (existingSubscriber != null)
+        return { isNew: false, subscriber: existingSubscriber }
+
+      const newSubscriber: Subscriber = {
         client: subscriberOptions.client,
         dateSubscribed: Date.now(),
       }
-      instance.subscribers[subscriberOptions.client.uuid] = subscriber
-
-      if (!uuidAlreadyExists)
-        instance.numSubscribers += 1
-
-      return subscriber
+      instance.subscribers[subscriberOptions.client.uuid] = newSubscriber
+      instance.numSubscribers += 1
+      return { isNew: true, subscriber: newSubscriber }
     },
     broadcast: msg => {
       const serializedMsg = JSON.stringify(msg)
@@ -28,10 +28,11 @@ export const createSubscriberStore = (): SubscriberStore => {
     remove: clientUuid => {
       const uuidExists = clientUuid in instance.subscribers
       if (!uuidExists)
-        return
+        return false
 
       delete instance.subscribers[clientUuid]
       instance.numSubscribers -= 1
+      return true
     },
   }
 }

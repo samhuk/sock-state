@@ -7,4 +7,5 @@ export const CONSOLE_LOG_SERVER_REPORTER: StoreServerReporter = {
   onClientDisconnect: client => console.log(`Client ${client.shortUuid} disconnected.`),
   onClientMessage: (client, msgData) => console.log(`Message recieved from client ${client.shortUuid}: ${msgData}`),
   onClientSubscribeTopic: (client, topic) => console.log(`Client ${client.shortUuid} subscribed to ${topic.name} (${topic.getNumSubscribers()} subscribers).`),
+  onClientUnsubscribeTopic: (client, topic) => console.log(`Client ${client.shortUuid} unsubscribed from ${topic.name} (${topic.getNumSubscribers()} subscribers).`),
 }

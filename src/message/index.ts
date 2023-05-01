@@ -5,6 +5,7 @@ export const sortMessagesByType = (msgs: Message | Message[]): { [TMessageType i
 
   const result: { [TMessageType in MessageType]: Message<TMessageType>[] } = {
     subscribe: [],
+    unsubscribe: [],
     action: [],
     state: [],
   }
