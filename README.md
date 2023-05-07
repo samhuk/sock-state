@@ -122,7 +122,7 @@ Basic example:
 const storeServer = createStoreServer({
   host: 'localhost',
   port: 4000,
-  creporter: {
+  reporter: {
     ...,
     onClientAccepted: client => console.log(`Client ${client.shortUuid} connected (IP: ${client.req.socket.remoteAddress}).`),
     ...
@@ -134,7 +134,7 @@ storeServer.server.on('message', (msgData, client) => {
 })
 ```
 
-### Examples
+## Examples
 
 [./examples/chat-app](./examples/chat-app) - A basic chat app. To run this, clone this repository and run `npm i` then `npm run chat-app` (requires Node.js and npm).
 

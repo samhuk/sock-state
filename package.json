@@ -1,6 +1,6 @@
 {
   "name": "sock-state",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Redux-like state container over Web Sockets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -33,7 +33,7 @@
     "check": "npm run lint-errors-only && npm run build-ts && npm run unit-tests && npm run build-chat-app && echo Done!"
   },
   "repository": "https://github.com/samhuk/sock-state",
-  "keywords": ["websockets", "state", "redux", "container", "distributed"],
+  "keywords": ["websockets", "state", "redux", "container", "distributed", "sockstate"],
   "author": {
     "name": "Sam Hughes",
     "email": "samhughes1701@hotmail.co.uk",
