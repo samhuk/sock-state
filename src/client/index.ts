@@ -179,8 +179,8 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     options.reporter?.onConnect?.(host, port)
   })
 
-  client.on('disconnect', (host, port) => {
-    options.reporter?.onDisconnect?.(host, port)
+  client.on('disconnect', (host, port, info) => {
+    options.reporter?.onDisconnect?.(host, port, info)
   })
 
   client.on('connect-attempt-fail', (host, port) => {

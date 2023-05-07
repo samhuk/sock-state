@@ -1,7 +1,8 @@
+import { Client, ClientOptions, ExtractMessageTypeFromOptions, WebSocketEventHandlerMap, WebSocketEventName } from './types'
+
 import { ConnectionStatus } from '../connectionStatus'
 import { createListenerStore } from '../listenerStore'
 import { createMessageSender } from './messageSender'
-import { Client, ClientOptions, ExtractMessageTypeFromOptions, WebSocketEventHandlerMap, WebSocketEventName } from './types'
 
 export const createClient = <TClientOptions extends ClientOptions>(
   options: TClientOptions,
@@ -24,8 +25,8 @@ export const createClient = <TClientOptions extends ClientOptions>(
     listenerStore.call('connect', host, port)
   })
 
-  options.wsAdapter.on('disconnect', (host, port) => {
-    listenerStore.call('disconnect', host, port)
+  options.wsAdapter.on('disconnect', (host, port, info) => {
+    listenerStore.call('disconnect', host, port, info)
   })
 
   options.wsAdapter.on('connect-attempt-fail', (host, port) => {

@@ -1,5 +1,7 @@
-import { ConnectionStatus } from '../connectionStatus'
 import { WebSocketAdapter, WebSocketAdapterOnFn } from './webSocketAdapter/types'
+
+import { ConnectionStatus } from '../connectionStatus'
+import { DisconnectInfo } from '../types'
 
 export type ExtractMessageTypeFromOptions<
   TClientOptions extends { deserializer?: any }
@@ -13,7 +15,7 @@ export type WebSocketEventName = 'connect-attempt-start' | 'connect' | 'connect-
 
 export type WebSocketEventHandlerMap<TMessage extends any = any> = {
   connect: (host: string, port: number) => void
-  disconnect: (host: string, port: number) => void
+  disconnect: (host: string, port: number, info: DisconnectInfo) => void
   'connection-status-change': (newStatus: ConnectionStatus, prevStatus: ConnectionStatus) => void
   message: (msg: TMessage | TMessage[]) => void
   'connect-attempt-fail': (host: string, port: number) => void

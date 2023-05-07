@@ -74,8 +74,11 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
     reporter: {
       onCreateServer: () => options.reporter?.onCreateServer?.(options),
       onCreatingServer: () => options.reporter?.onCreatingServer?.(options),
-      onClientConnect: client => options.reporter?.onClientConnect?.(client, options),
+      onClientConnect: (ws, req) => options.reporter?.onClientConnect?.(ws, req),
+      onClientUnaccepted: (ws, req, data) => options.reporter?.onClientUnaccepted?.(ws, req, data),
+      onClientAccepted: client => options.reporter?.onClientAccepted?.(client),
     },
+    connectionAcceptor: options.connectionAcceptor,
   })
 
   const topicStore = createTopicStore({

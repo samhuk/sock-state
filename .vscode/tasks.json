@@ -11,9 +11,9 @@
       }
     },
     {
-      "label": "IntegrationTestsDebugPreLaunchTask",
+      "label": "chatAppPreLaunchTask",
       "type": "shell",
-      "command": "npm run build-integration-tests",
+      "command": "npm run build-chat-app",
       "presentation": {
         "reveal": "silent",
         "revealProblems": "onProblem",

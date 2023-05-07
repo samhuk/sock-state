@@ -1,5 +1,5 @@
-import { createServer } from '.'
 import { createNodeClient } from '../client/node'
+import { createServer } from '.'
 import { wait } from '../async'
 
 describe('server', () => {
@@ -36,7 +36,7 @@ describe('server', () => {
 
       await wait(100)
 
-      expect(Object.keys(instance.getClients()).length).toBe(1)
+      expect(Object.keys(instance.clients).length).toBe(1)
 
       await client.disconnect()
       await wait(100)

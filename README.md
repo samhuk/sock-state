@@ -76,6 +76,64 @@ client2Topic.dispatch(addMessage('Hello Client 2'))
 client2Topic.dispatch(addMessage('Hello Client 1'))
 ```
 
+### Dynamic Topics
+
+Topics can be added to and removed from the server. Any clients subscribed to a topic that is deleted will be notified and automatically unsusbcribe from it.
+
+Basic example:
+
+```typescript
+// Create server for websockets and state
+const server = createStoreServer({
+  host: 'localhost',
+  port: 4000,
+})
+server.addTopic({ name: 'chatApp', reducer: ... })
+server.deleteTopic('chatApp')
+```
+
+### Accepting/Rejecting Connections
+
+Connections can be accepted or rejected conditionally.
+
+Basic example:
+
+```typescript
+const server = createStoreServer({
+  host: 'localhost',
+  port: 4000,
+  connectionAcceptor: (webSocket, request) => {
+    const isIpAllowed = checkIp(request.socket.remoteAddress)
+    return {
+      accepted: isIpAllowed,
+      reason: isIpAllowed ? undefined : 'IP Address banned',
+    }
+  }
+})
+```
+
+### Event Listening
+
+Various events can be listened for.
+
+Basic example:
+
+```typescript
+const storeServer = createStoreServer({
+  host: 'localhost',
+  port: 4000,
+  creporter: {
+    ...,
+    onClientAccepted: client => console.log(`Client ${client.shortUuid} connected (IP: ${client.req.socket.remoteAddress}).`),
+    ...
+  },
+})
+
+storeServer.server.on('message', (msgData, client) => {
+  console.log(`Message recieved from client ${client.shortUuid}: ${msgData}`)
+})
+```
+
 ### Examples
 
 [./examples/chat-app](./examples/chat-app) - A basic chat app. To run this, clone this repository and run `npm i` then `npm run chat-app` (requires Node.js and npm).

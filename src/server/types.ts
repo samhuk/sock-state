@@ -1,6 +1,6 @@
+import { ConnectionAcceptor, Server } from '../common/server/types'
 import { Topic, TopicOptions } from './topicStore/topic/types'
 
-import { Server } from '../common/server/types'
 import { StoreServerReporter } from './reporter/types'
 import { TopicOptionsDict } from './topicStore/types'
 
@@ -49,4 +49,9 @@ export type StoreServerOptions = {
    * This is useful for logging the various events of the store server.
    */
   reporter?: StoreServerReporter
+  /**
+   * Optional function that determines if a connection to the Web Socket server will be accepted
+   * or rejected (therefore instantly closed).
+   */
+  connectionAcceptor?: ConnectionAcceptor
 }

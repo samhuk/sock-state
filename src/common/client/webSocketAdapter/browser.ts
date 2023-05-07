@@ -1,8 +1,11 @@
-import { wait } from '../../async'
-import { ConnectionStatus } from '../../connectionStatus'
-import { createListenerStore } from '../../listenerStore'
-import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
 import { WebSocketAdapter, WebSocketAdapterOptions } from './types'
+import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
+
+import { ConnectionStatus } from '../../connectionStatus'
+import { DisconnectInfo } from '../../types'
+import { createListenerStore } from '../../listenerStore'
+import { parseDisconnectReason } from './common'
+import { wait } from '../../async'
 
 const _connect = (host: string, port: number, retryDelayMs: number, onConnect: (ws: WebSocket) => void, onConnectAttemptFail: () => void) => {
   let ws: WebSocket
@@ -60,11 +63,12 @@ export const createBrowserWebSocketAdapter = <TMessage extends any>(
     listenerStore.call('connect', host, port)
   }
 
-  const onDisconnect = (host: string, port: number) => {
+  const onDisconnect = (host: string, port: number, reason: string) => {
+    const disconnectInfo = parseDisconnectReason(reason)
     changeConnectionStatus(ConnectionStatus.DISCONNECTED)
-    listenerStore.call('disconnect', host, port)
-    // Try to reconnect
-    if (!manuallyClosed)
+    listenerStore.call('disconnect', host, port, disconnectInfo)
+    // Try to reconnect if it wasn't because of a rejection
+    if (!manuallyClosed && disconnectInfo.reason !== 'rejected')
       instance.connect(previousHost, previousPort)
   }
 
@@ -89,7 +93,7 @@ export const createBrowserWebSocketAdapter = <TMessage extends any>(
 
       onConnecting(host, port)
       ws = await connect(host, port, 1000, () => onConnectAttempFail(host, port))
-      ws.addEventListener('close', () => onDisconnect(host, port))
+      ws.addEventListener('close', e => onDisconnect(host, port, e.reason))
       ws.addEventListener('message', msgEvent => onMessage(msgEvent))
       onConnect(host, port)
       return ws

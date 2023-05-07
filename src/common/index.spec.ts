@@ -22,7 +22,7 @@ describe('e2e of base server & client', () => {
 
     await wait(100)
 
-    expect(Object.keys(server.getClients()).length).toBe(1)
+    expect(Object.keys(server.clients).length).toBe(1)
 
     await client.disconnect()
     server.close()
