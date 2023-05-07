@@ -19,6 +19,7 @@ export enum MessageType {
   SUBSCRIBE = 'subscribe',
   ACTION = 'action',
   STATE = 'state',
+  TOPIC_DELETED = 'topic_deleted'
 }
 
 export type Message<TMessageType extends MessageType = MessageType> = TypeDependantBase<MessageType, {
@@ -26,6 +27,7 @@ export type Message<TMessageType extends MessageType = MessageType> = TypeDepend
   [MessageType.UNSUBSCRIBE]: UnsubscribeMessageOptions
   [MessageType.ACTION]: ActionMessageOptions
   [MessageType.STATE]: StateMessageOptions
+  [MessageType.TOPIC_DELETED]: TopicDeletedMessageOptions
 }, TMessageType, 'type', 'data'> & { dateCreated: number }
 
 export type MessageList = Message[]
@@ -52,6 +54,13 @@ export type UnsubscribeMessageOptions = {
 }
 
 export type UnsubscribeMessage = Message<MessageType.UNSUBSCRIBE>
+
+export type TopicDeletedMessageOptions = {
+  topicName: string
+  data?: any
+}
+
+export type TopicDeletedMessage = Message<MessageType.TOPIC_DELETED>
 
 export type ResolvedMessages = {
   subscribe: SubscribeMessage[],

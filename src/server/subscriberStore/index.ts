@@ -19,7 +19,7 @@ export const createSubscriberStore = (): SubscriberStore => {
       instance.numSubscribers += 1
       return { isNew: true, subscriber: newSubscriber }
     },
-    broadcast: msg => {
+    broadcastMessage: msg => {
       const serializedMsg = JSON.stringify(msg)
       Object.values(instance.subscribers).forEach(subscriber => {
         subscriber.client.ws.send(serializedMsg)

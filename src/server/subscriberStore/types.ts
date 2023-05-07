@@ -1,4 +1,5 @@
-import { ActionMessage } from '../../message/types'
+import { ActionMessage, Message, TopicDeletedMessage } from '../../message/types'
+
 import { Client } from '../../common/server/clientStore/types'
 
 export type AddSubscriberResult = { isNew: boolean, subscriber: Subscriber }
@@ -24,5 +25,5 @@ export type SubscriberStore = {
    * @returns `true` if subscriber existed, `false` if it didn't exist.
    */
   remove: (clientUuid: string) => boolean
-  broadcast: (msg: ActionMessage | ActionMessage[]) => void
+  broadcastMessage: (msg: Message | Message[]) => void
 }

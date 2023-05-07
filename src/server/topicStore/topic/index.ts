@@ -1,8 +1,27 @@
-import { MessageType, StateMessage } from '../../../message/types'
+import { MessageType, StateMessage, TopicDeletedMessage } from '../../../message/types'
 import { Topic, TopicOptionsWithoutName } from './types'
 
+import { StateStore } from '../../../stateStore/types'
 import { createStateStore } from '../../../stateStore'
 import { createSubscriberStore } from '../../subscriberStore'
+
+const createStateMessage = (stateStore: StateStore, topicName: string): StateMessage => ({
+  type: MessageType.STATE,
+  dateCreated: Date.now(),
+  data: {
+    topic: topicName,
+    state: stateStore.state,
+  },
+})
+
+const createTopicDeletedMessage = (topicName: string, data?: any): TopicDeletedMessage => ({
+  type: MessageType.TOPIC_DELETED,
+  dateCreated: Date.now(),
+  data: {
+    topicName,
+    data,
+  },
+})
 
 export const createTopic = <TState extends any>(
   name: string,
@@ -18,22 +37,18 @@ export const createTopic = <TState extends any>(
     getState: () => stateStore.state,
     subscribeClient: client => {
       const addSubscriberResult = subscriberStore.add({ client })
-      const stateMsg: StateMessage = {
-        type: MessageType.STATE,
-        dateCreated: Date.now(),
-        data: {
-          topic: name,
-          state: stateStore.state,
-        },
-      }
+      const stateMsg = createStateMessage(stateStore, name)
       const serializedStateMsg = JSON.stringify(stateMsg)
       client.ws.send(serializedStateMsg)
       return addSubscriberResult
     },
     unsubscribeClient: clientUuid => subscriberStore.remove(clientUuid),
-    digest: msgs => {
+    digestActionMsgs: msgs => {
       stateStore.digest(msgs)
-      subscriberStore.broadcast(msgs)
+      subscriberStore.broadcastMessage(msgs)
+    },
+    broadcastDeleted: data => {
+      subscriberStore.broadcastMessage(createTopicDeletedMessage(name, data))
     },
   }
 }

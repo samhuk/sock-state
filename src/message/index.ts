@@ -8,6 +8,7 @@ export const sortMessagesByType = (msgs: Message | Message[]): { [TMessageType i
     unsubscribe: [],
     action: [],
     state: [],
+    topic_deleted: [],
   }
   normalizedMsgs.forEach(msg => {
     result[msg.type].push(msg as any)

@@ -5,12 +5,13 @@ import { ConnectionStatus } from '../common/connectionStatus'
 import { Reducer } from '../reducer/types'
 import { StoreClientReporter } from './reporter/types'
 
-export type ClientTopicHandlerEventName = 'get-state' | 'state-change' | 'action'
+export type ClientTopicHandlerEventName = 'get-state' | 'state-change' | 'action' | 'topic-deleted'
 
 export type ClientTopicHandlerMap<TState extends any, TAction extends Action> = {
   'get-state': (state: TState) => void
   'state-change': (state: TState, isGetInitialState: boolean) => void
   action: (action: TAction | TAction[]) => void
+  'topic-deleted': (topicDeletedMsgData?: any) => void
 }
 
 export type ClientCreator = (options: { host: string, port: number }) => Client<Message>
@@ -36,6 +37,7 @@ export type TopicSubscriptionOnFnArgsMap<TState extends any, TAction extends Act
   'get-state': [handler: ClientTopicHandlerMap<TState, TAction>['get-state']]
   'state-change': [reducer: Reducer<TState, TAction>, handler: ClientTopicHandlerMap<TState, TAction>['state-change']]
   action: [handler: ClientTopicHandlerMap<TState, TAction>['action']]
+  'topic-deleted': [handler: ClientTopicHandlerMap<TState, TAction>['topic-deleted']]
 }
 
 export type TopicSubscription<
@@ -101,7 +103,7 @@ export type StoreClient = {
    */
   dispatch: (action: ActionMessageOptions) => void
   /**
-   * Listen for events.
+   * Listen for an event.
    *
    * @returns Listener UUID
    */

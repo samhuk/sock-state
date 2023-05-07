@@ -1,4 +1,4 @@
-import { ActionMessage, Message, MessageType, StateMessage } from '../message/types'
+import { ActionMessage, Message, MessageType, StateMessage, TopicDeletedMessage } from '../message/types'
 import {
   ClientCreator,
   StoreClient,
@@ -32,6 +32,7 @@ const createTopicSubscription = (
   client: Client<Message>,
   topicRecieveStateMsgListeners: ListenerStore<string, { [k: string]: (stateMsg: StateMessage) => void }>,
   topicRecieveActionMsgsListeners: ListenerStore<string, { [k: string]: (actionMsgs: ActionMessage | ActionMessage[]) => void }>,
+  topicRecieveTopicDeletedMsgListeners: ListenerStore<string, { [k: string]: (topicDeletedMsg: TopicDeletedMessage) => void }>,
 ): TopicSubscription => {
   sendSubscriptionRequest(client, topicName)
 
@@ -96,6 +97,19 @@ const createTopicSubscription = (
         }
         return actionMsgsListenerUuid
       }
+
+      if (eventName === 'topic-deleted') {
+        const [handler] = args as TopicSubscriptionOnFnArgsMap<any, any>['topic-deleted']
+        const listenerUuid = topicRecieveTopicDeletedMsgListeners.add(topicName, topicDeletedMsg => {
+          handler(topicDeletedMsg.data.data)
+        })
+
+        offFns[listenerUuid] = () => {
+          topicRecieveStateMsgListeners.remove(listenerUuid)
+        }
+        return listenerUuid
+      }
+
       return null
     },
     off: handlerUuid => offFns[handlerUuid]?.(),
@@ -120,6 +134,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
 
   const topicRecieveStateMsgListeners = createListenerStore<string, { [k: string]:(stateMsg: StateMessage) => void }>()
   const topicRecieveActionMsgsListeners = createListenerStore<string, { [k: string]:(actionMsgs: ActionMessage | ActionMessage[]) => void }>()
+  const topicDeletedMsgListeners = createListenerStore<string, { [k: string]:(topicDeletedMsg: TopicDeletedMessage) => void }>()
 
   const listenerStore = createListenerStore<StoreClientEventName, StoreClientEventHandlerMap>()
 
@@ -144,6 +159,19 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     const sortedActionMsgs = sortActionMessagesByTopic(messagesByType.action)
     Object.entries(sortedActionMsgs).forEach(([topicName, actionMsgs]) => {
       topicRecieveActionMsgsListeners.call(topicName, actionMsgs)
+    })
+
+    // Handle any topic deleted messages
+    messagesByType.topic_deleted.forEach(topicDeletedMsg => {
+      const topicName = topicDeletedMsg.data.topicName
+      options.reporter?.onTopicDeleted(topicName, topicDeletedMsg.data.data)
+      // Remove the state change msg and action msg(s) listeners as the topic for them has been deleted
+      topicRecieveStateMsgListeners.removeByEventName(topicName)
+      topicRecieveActionMsgsListeners.removeByEventName(topicName)
+      // Call any of the topic's on-delete listeners
+      topicDeletedMsgListeners.call(topicName, topicDeletedMsg)
+      // Remove any of the topic's on-delete listeners since the topic for them has been deleted
+      topicDeletedMsgListeners.removeByEventName(topicName)
     })
   })
 
@@ -179,6 +207,15 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     }),
     on: (eventName, handler) => listenerStore.add(eventName, handler),
     off: handlerUuid => listenerStore.remove(handlerUuid),
-    topic: topicName => createTopicSubscription(topicName, client, topicRecieveStateMsgListeners, topicRecieveActionMsgsListeners),
+    topic: topicName => {
+      options.reporter?.onSubscribe(topicName)
+      return createTopicSubscription(
+        topicName,
+        client,
+        topicRecieveStateMsgListeners,
+        topicRecieveActionMsgsListeners,
+        topicDeletedMsgListeners,
+      )
+    },
   }
 }

@@ -26,5 +26,6 @@ export type Topic<TState extends any = any> = {
    * @returns `true` if given client was subscribed to the given topic, `false` if it wasn't.
    */
   unsubscribeClient: (clientUuid: string) => boolean
-  digest: (actions: ActionMessage | ActionMessage[]) => void
+  digestActionMsgs: (actions: ActionMessage | ActionMessage[]) => void
+  broadcastDeleted: (data?: any) => void
 }

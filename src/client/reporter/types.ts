@@ -10,4 +10,6 @@ export type StoreClientReporter = {
   onDisconnect?: (host: string, port: number) => void
   onConnectionStatusChange?: (newStatus: ConnectionStatus, prevStatus: ConnectionStatus) => void
   onMessages?: (msgs: Message | Message[]) => void
+  onSubscribe?: (topicName: string) => void
+  onTopicDeleted?: (topicName: string, data?: any) => void
 }

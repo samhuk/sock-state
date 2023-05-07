@@ -2,9 +2,69 @@ import { Message, MessageType, SubscribeMessage, UnsubscribeMessage } from '../m
 import { StoreServer, StoreServerOptions } from './types'
 
 import { Client } from '../common/server/clientStore/types'
+import { StoreServerReporter } from '../types'
+import { TopicStore } from './topicStore/types'
 import { createServer } from '../common/server'
 import { createTopicStore } from './topicStore'
 import { sortMessagesByType } from '../message'
+
+const processSubscribeMessage = (
+  msg: SubscribeMessage,
+  senderClient: Client,
+  topicStore: TopicStore,
+  reporter?: StoreServerReporter,
+) => {
+  const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
+  topicNames.forEach(topicName => {
+    topicStore.subscribeClientToTopic(senderClient, topicName)
+    reporter?.onClientSubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
+  })
+}
+
+const processUnsubscribeMessage = (
+  msg: UnsubscribeMessage,
+  senderClient: Client,
+  topicStore: TopicStore,
+  reporter?: StoreServerReporter,
+) => {
+  const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
+  topicNames.forEach(topicName => {
+    const wasSubscribed = topicStore.unsubscribeClientFromTopic(senderClient.uuid, topicName)
+    if (wasSubscribed)
+      reporter?.onClientUnsubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
+  })
+}
+
+const processMessages = (
+  msgs: Message | Message[],
+  senderClient: Client,
+  topicStore: TopicStore,
+) => {
+  if (Array.isArray(msgs)) {
+    const messagesByType = sortMessagesByType(msgs)
+    messagesByType.subscribe.forEach(msg => processSubscribeMessage(msg, senderClient, topicStore))
+    messagesByType.unsubscribe.forEach(msg => processUnsubscribeMessage(msg, senderClient, topicStore))
+    topicStore.digest(messagesByType.action)
+  }
+  else {
+    switch (msgs.type) {
+      case MessageType.SUBSCRIBE: {
+        processSubscribeMessage(msgs, senderClient, topicStore)
+        break
+      }
+      case MessageType.UNSUBSCRIBE: {
+        processUnsubscribeMessage(msgs, senderClient, topicStore)
+        break
+      }
+      case MessageType.ACTION: {
+        topicStore.digest(msgs)
+        break
+      }
+      default:
+        break
+    }
+  }
+}
 
 export const createStoreServer = (options: StoreServerOptions): StoreServer => {
   options.reporter?.onBegin?.(options)
@@ -22,55 +82,11 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
     topics: options.topics,
   })
 
-  const processSubscribeMessage = (msg: SubscribeMessage, senderClient: Client) => {
-    const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
-    topicNames.forEach(topicName => {
-      topicStore.subscribeClientToTopic(senderClient, topicName)
-      options.reporter?.onClientSubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
-    })
-  }
-
-  const processUnsubscribeMessage = (msg: UnsubscribeMessage, senderClient: Client) => {
-    const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
-    topicNames.forEach(topicName => {
-      const wasSubscribed = topicStore.unsubscribeClientFromTopic(senderClient.uuid, topicName)
-      if (wasSubscribed)
-        options.reporter?.onClientUnsubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
-    })
-  }
-
-  const processMessage = (msgs: Message | Message[], senderClient: Client) => {
-    if (Array.isArray(msgs)) {
-      const messagesByType = sortMessagesByType(msgs)
-      messagesByType.subscribe.forEach(msg => processSubscribeMessage(msg, senderClient))
-      messagesByType.unsubscribe.forEach(msg => processUnsubscribeMessage(msg, senderClient))
-      topicStore.digest(messagesByType.action)
-    }
-    else {
-      switch (msgs.type) {
-        case MessageType.SUBSCRIBE: {
-          processSubscribeMessage(msgs, senderClient)
-          break
-        }
-        case MessageType.UNSUBSCRIBE: {
-          processUnsubscribeMessage(msgs, senderClient)
-          break
-        }
-        case MessageType.ACTION: {
-          topicStore.digest(msgs)
-          break
-        }
-        default:
-          break
-      }
-    }
-  }
-
   server.on('message', (rawData, senderClient) => {
     const rawDataStr = String(rawData)
     options.reporter?.onClientMessage?.(senderClient, rawDataStr, options)
     const msgs = JSON.parse(rawDataStr) as Message | Message[]
-    processMessage(msgs, senderClient)
+    processMessages(msgs, senderClient, topicStore)
   })
 
   server.on('disconnect', client => {
@@ -80,6 +96,14 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
 
   return {
     server,
+    getTopic: topicStore.getTopic,
+    getTopicList: topicStore.getTopicList,
+    addTopic: _options => (
+      topicStore.addTopic(_options)
+    ),
+    deleteTopic: (topicName, data) => (
+      topicStore.deleteTopic(topicName, data)
+    ),
     close: () => server.close(),
   }
 }

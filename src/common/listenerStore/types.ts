@@ -39,4 +39,5 @@ export type ListenerStore<
     }
   ) => string
   remove: (uuid: string) => void
+  removeByEventName: (eventName: TEventNames) => void
 }

@@ -1,9 +1,26 @@
+import { Topic, TopicOptions } from './topicStore/topic/types'
+
 import { Server } from '../common/server/types'
 import { StoreServerReporter } from './reporter/types'
 import { TopicOptionsDict } from './topicStore/types'
 
 export type StoreServer = {
   server: Server
+  getTopic: (topicName: string) => Topic
+  getTopicList: () => Topic[]
+  /**
+   * Adds a new topic to the store server.
+   */
+  addTopic: (options: TopicOptions) => Topic
+  /**
+   * Deletes a topic.
+   *
+   * This will remove all listeners associated with the topic and will notify any clients
+   * that are subscribed to the topic that it has been deleted.
+   *
+   * @returns `true` whether the given `topicName` corresponded to an existing topic. `false` if not.
+   */
+  deleteTopic: (topicName: string, data?: any) => boolean
   /**
    * Closes the store server.
    *
@@ -22,10 +39,10 @@ export type StoreServerOptions = {
    */
   port: number
   /**
-   * The pre-defined topics of the store server that clients will be able
+   * Optional pre-defined topics of the store server that clients will be able
    * to subscribe to.
    */
-  topics: TopicOptionsDict
+  topics?: TopicOptionsDict
   /**
    * Optional reporter for the store server.
    *
