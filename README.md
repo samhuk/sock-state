@@ -86,4 +86,4 @@ See [./contributing/development.md](./contributing/development.md)
 
 ---
 
-If you found this package delightful, feel free to [buy me a coffee](https://www.buymeacoffee.com/samhuk) ✨
+If you would like to support the development of Exhibitor, feel free to [sponsor me on GitHub](https://github.com/sponsors/samhuk) or [buy me a coffee](https://www.buymeacoffee.com/samhuk) ✨
