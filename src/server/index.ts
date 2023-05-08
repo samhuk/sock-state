@@ -16,6 +16,7 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
       onClientConnect: (ws, req) => options.reporter?.onClientConnect?.(ws, req),
       onClientUnaccepted: (ws, req, data) => options.reporter?.onClientUnaccepted?.(ws, req, data),
       onClientAccepted: client => options.reporter?.onClientAccepted?.(client),
+      // onClientDisconnect and onClientMessage are listened-to seperately below
     },
     connectionAcceptor: options.connectionAcceptor,
   })
