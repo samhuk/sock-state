@@ -19,7 +19,9 @@ export enum MessageType {
   SUBSCRIBE = 'subscribe',
   ACTION = 'action',
   STATE = 'state',
-  TOPIC_DELETED = 'topic_deleted'
+  TOPIC_DELETED = 'topic_deleted',
+  SUBSCRIBE_UNSUCCESSFUL = 'subscribe_unsuccessful',
+  UNSUBSCRIBE_UNSUCCESSFUL = 'unsubscribe_unsuccessful'
 }
 
 export type Message<TMessageType extends MessageType = MessageType> = TypeDependantBase<MessageType, {
@@ -28,6 +30,8 @@ export type Message<TMessageType extends MessageType = MessageType> = TypeDepend
   [MessageType.ACTION]: ActionMessageOptions
   [MessageType.STATE]: StateMessageOptions
   [MessageType.TOPIC_DELETED]: TopicDeletedMessageOptions
+  [MessageType.SUBSCRIBE_UNSUCCESSFUL]: SubscribeUnsuccessfulMessageOptions
+  [MessageType.UNSUBSCRIBE_UNSUCCESSFUL]: UnsubscribeUnsuccessfulMessageOptions
 }, TMessageType, 'type', 'data'> & { dateCreated: number }
 
 export type MessageList = Message[]
@@ -56,11 +60,28 @@ export type UnsubscribeMessageOptions = {
 export type UnsubscribeMessage = Message<MessageType.UNSUBSCRIBE>
 
 export type TopicDeletedMessageOptions = {
+  /**
+   * The name of the topic that was deleted.
+   */
   topicName: string
   data?: any
 }
 
 export type TopicDeletedMessage = Message<MessageType.TOPIC_DELETED>
+
+export type SubscribeUnsuccessfulMessageOptions = {
+  /**
+   * The name of the topic that was unsuccessfully (un)subscribed to.
+   */
+  topic: string
+  data?: any
+}
+
+export type SubscribeUnsuccessfulMessage = Message<MessageType.SUBSCRIBE_UNSUCCESSFUL>
+
+export type UnsubscribeUnsuccessfulMessage = Message<MessageType.UNSUBSCRIBE_UNSUCCESSFUL>
+
+export type UnsubscribeUnsuccessfulMessageOptions = SubscribeUnsuccessfulMessageOptions
 
 export type ResolvedMessages = {
   subscribe: SubscribeMessage[],

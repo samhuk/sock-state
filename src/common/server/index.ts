@@ -1,10 +1,21 @@
 import { Server, ServerEventNameHandlerMap, ServerEventNames, ServerOptions } from './types'
 
+import { ClientStore } from './clientStore/types'
 import { DisconnectInfo } from '../types'
 // eslint-disable-next-line import/order
 import { WebSocketServer } from 'ws'
 import { createClientStore } from './clientStore'
 import { createListenerStore } from '../listenerStore'
+
+const createClientDisconnector = (clientStore: ClientStore) => (clientUuid: string, data?: any): boolean => {
+  const client = clientStore.clients[clientUuid]
+  if (client == null)
+    return false
+
+  const disconnectData: DisconnectInfo = { reason: 'disconnected', data }
+  client.ws.close(1008, JSON.stringify(disconnectData))
+  return true
+}
 
 export const createServer = <
   TMessage extends any = any,
@@ -47,9 +58,12 @@ export const createServer = <
     })
   })
 
+  const clientDisconnector = createClientDisconnector(clientStore)
+
   return {
     clients: clientStore.clients,
     getClient: uuid => clientStore.clients[uuid],
+    disconnectClient: clientDisconnector,
     close: () => wss.close(),
     once: (eventName, handler) => listenerStore.add(eventName, handler as any, { removeOnceCalled: true }),
     on: (eventName, handler) => listenerStore.add(eventName, handler as any),

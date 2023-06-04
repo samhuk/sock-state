@@ -27,5 +27,9 @@ export type Topic<TState extends any = any> = {
    */
   unsubscribeClient: (clientUuid: string) => boolean
   digestActionMsgs: (actions: ActionMessage | ActionMessage[]) => void
+  /**
+   * Sends a message to all subscribed clients that this topic has been deleted.
+   * This will inform them that they need to unsubscribe from the topic on their side.
+   */
   broadcastDeleted: (data?: any) => void
 }

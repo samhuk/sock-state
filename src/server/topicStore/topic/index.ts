@@ -4,6 +4,7 @@ import { Topic, TopicOptionsWithoutName } from './types'
 import { StateStore } from '../../../stateStore/types'
 import { createStateStore } from '../../../stateStore'
 import { createSubscriberStore } from '../../subscriberStore'
+import { sendMessageToClient } from '../..'
 
 const createStateMessage = (stateStore: StateStore, topicName: string): StateMessage => ({
   type: MessageType.STATE,
@@ -37,9 +38,7 @@ export const createTopic = <TState extends any>(
     getState: () => stateStore.state,
     subscribeClient: client => {
       const addSubscriberResult = subscriberStore.add({ client })
-      const stateMsg = createStateMessage(stateStore, name)
-      const serializedStateMsg = JSON.stringify(stateMsg)
-      client.ws.send(serializedStateMsg)
+      sendMessageToClient(client, createStateMessage(stateStore, name))
       return addSubscriberResult
     },
     unsubscribeClient: clientUuid => subscriberStore.remove(clientUuid),

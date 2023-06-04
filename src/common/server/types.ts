@@ -19,7 +19,9 @@ export type ServerEventNames = 'connect' | 'connect-unaccepted' | 'connect-accep
 
 type ConnectionAcceptorDataTypeFromServerOptions<
   TServerOptions extends ServerOptions = ServerOptions
-> = ReturnType<TServerOptions['connectionAcceptor']>['data']
+> = TServerOptions extends { connectionAcceptor: any }
+  ? ReturnType<TServerOptions['connectionAcceptor']>['data']
+  : undefined
 
 export type ServerEventNameHandlerMap<
   TMessage extends any = any,
@@ -72,6 +74,7 @@ export type Server<
 > = {
   clients: Clients
   getClient: (uuid: string) => Client
+  disconnectClient: (uuid: string, data?: any) => boolean
   close: () => void
   once: OnFn<RawData, TServerOptions>
   on: OnFn<RawData, TServerOptions>

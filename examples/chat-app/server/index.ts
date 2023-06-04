@@ -12,7 +12,8 @@ import path from 'path'
 const HTTP_SERVER_HOST = 'localhost'
 const HTTP_SERVER_PORT = 4000
 
-const STORE_SERVER_HOST = 'localhost'
+// 0.0.0.0 makes it reachable by not just the browser, but by "external" clients like Insomnia/Postman as well.
+const STORE_SERVER_HOST = '0.0.0.0'
 const STORE_SERVER_PORT = 4001
 
 const CLIENT_SRC_REL_DIR = path.resolve(__dirname, '../../client')

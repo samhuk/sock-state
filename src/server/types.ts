@@ -1,8 +1,12 @@
 import { ConnectionAcceptor, Server } from '../common/server/types'
 import { Topic, TopicOptions } from './topicStore/topic/types'
 
+import { Client } from '../common/server/clientStore/types'
 import { StoreServerReporter } from './reporter/types'
 import { TopicOptionsDict } from './topicStore/types'
+
+export type SubscriptionAcceptor<TResultReason extends any = any> =
+  (client: Client, topic: Topic) => boolean | { accepted: boolean, reason: TResultReason }
 
 export type StoreServer = {
   server: Server
@@ -22,6 +26,14 @@ export type StoreServer = {
    */
   deleteTopic: (topicName: string, data?: any) => boolean
   /**
+   * Disconnects a client.
+   *
+   * Additional `data` can be provided to the client, such as in order to inform it of the disconnect reason.
+   *
+   * @returns `true` whether the given `clientUuid` corresponded to a connected client. `false` if not.
+   */
+  disconnectClient: (clientUuid: string, data?: any) => boolean
+  /**
    * Closes the store server.
    *
    * This will disconnect any and all connected clients.
@@ -29,7 +41,9 @@ export type StoreServer = {
   close: () => void
 }
 
-export type StoreServerOptions = {
+export type StoreServerOptions<
+  TSubscriptionAcceptorResultReason extends any = any
+> = {
   /**
    * The IP address or host name that the store server will bind to.
    */
@@ -43,12 +57,13 @@ export type StoreServerOptions = {
    * to subscribe to.
    */
   topics?: TopicOptionsDict
+  subscriptionAcceptor?: SubscriptionAcceptor<TSubscriptionAcceptorResultReason>
   /**
    * Optional reporter for the store server.
    *
    * This is useful for logging the various events of the store server.
    */
-  reporter?: StoreServerReporter
+  reporter?: StoreServerReporter<TSubscriptionAcceptorResultReason>
   /**
    * Optional function that determines if a connection to the Web Socket server will be accepted
    * or rejected (therefore instantly closed).

@@ -3,7 +3,6 @@ import { WebSocketAdapter, WebSocketAdapterOptions } from './types'
 import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
 
 import { ConnectionStatus } from '../../connectionStatus'
-import { DisconnectInfo } from '../../types'
 import { createListenerStore } from '../../listenerStore'
 import { parseDisconnectReason } from './common'
 import { wait } from '../../async'
@@ -12,8 +11,9 @@ const _connect = (host: string, port: number, retryDelayMs: number, onConnect: (
   let ws: WebSocket
   ws = new WebSocket(`ws://${host}:${port}`)
   ws.onerror = () => {} // onClose function below will handle failed connection logic. This prevents crashes in nodejs envs.
-  let onOpen: () => void = null
-  let onClose: () => void = null
+  let onOpen: () => void
+  let onClose: () => void
+  // eslint-disable-next-line prefer-const
   onOpen = () => {
     ws.removeEventListener('open', onOpen)
     ws.removeEventListener('close', onClose)
@@ -23,7 +23,9 @@ const _connect = (host: string, port: number, retryDelayMs: number, onConnect: (
     ws.removeEventListener('open', onOpen)
     ws.removeEventListener('close', onClose)
     ws.close()
-    ws = null
+    // We do an ignore here as the required JS logic to avoid this is extensive and adds overhead
+    // @ts-ignore
+    ws = undefined
     wait(retryDelayMs).then(() => {
       _connect(host, port, retryDelayMs, onConnect, onConnectAttemptFail)
     })

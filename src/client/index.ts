@@ -110,7 +110,7 @@ const createTopicSubscription = (
         return listenerUuid
       }
 
-      return null
+      return null as unknown as string
     },
     off: handlerUuid => offFns[handlerUuid]?.(),
     unsubscribe: () => {
@@ -164,7 +164,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     // Handle any topic deleted messages
     messagesByType.topic_deleted.forEach(topicDeletedMsg => {
       const topicName = topicDeletedMsg.data.topicName
-      options.reporter?.onTopicDeleted(topicName, topicDeletedMsg.data.data)
+      options.reporter?.onTopicDeleted?.(topicName, topicDeletedMsg.data.data)
       // Remove the state change msg and action msg(s) listeners as the topic for them has been deleted
       topicRecieveStateMsgListeners.removeByEventName(topicName)
       topicRecieveActionMsgsListeners.removeByEventName(topicName)
@@ -208,7 +208,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     on: (eventName, handler) => listenerStore.add(eventName, handler),
     off: handlerUuid => listenerStore.remove(handlerUuid),
     topic: topicName => {
-      options.reporter?.onSubscribe(topicName)
+      options.reporter?.onSubscribe?.(topicName)
       return createTopicSubscription(
         topicName,
         client,

@@ -4,6 +4,7 @@ import { MessageProcessor, MessageProcessorOptions } from './types'
 import { Client } from '../../common/server/clientStore/types'
 import { StoreServerReporter } from '../reporter/types'
 import { TopicStore } from '../topicStore/types'
+import { sendMessageToClient } from '..'
 import { sortMessagesByType } from '../../message'
 
 const processSubscribeMessage = (
@@ -14,8 +15,21 @@ const processSubscribeMessage = (
 ) => {
   const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
   topicNames.forEach(topicName => {
-    topicStore.subscribeClientToTopic(senderClient, topicName)
-    reporter?.onClientSubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
+    const susbcribeResult = topicStore.subscribeClientToTopic(senderClient, topicName)
+    if (susbcribeResult === undefined) {
+      sendMessageToClient(senderClient, {
+        type: MessageType.SUBSCRIBE_UNSUCCESSFUL,
+        dateCreated: Date.now(),
+        data: {
+          topic: topicName,
+          data: 'topic-not-exist',
+        },
+      })
+      reporter?.onClientUnsuccessfulSubscribeTopic?.(senderClient)
+    }
+    else {
+      reporter?.onClientSubscribeTopic?.(susbcribeResult.client, topicStore.getTopic(topicName))
+    }
   })
 }
 
@@ -28,8 +42,31 @@ const processUnsubscribeMessage = (
   const topicNames = Array.isArray(msg.data.topics) ? msg.data.topics : [msg.data.topics]
   topicNames.forEach(topicName => {
     const wasSubscribed = topicStore.unsubscribeClientFromTopic(senderClient.uuid, topicName)
-    if (wasSubscribed)
+    if (wasSubscribed === undefined) {
+      reporter?.onClientUnsuccessfulUnsubscribeTopic?.(senderClient, 'topic-not-exist')
+      sendMessageToClient(senderClient, {
+        type: MessageType.UNSUBSCRIBE_UNSUCCESSFUL,
+        dateCreated: Date.now(),
+        data: {
+          topic: topicName,
+          data: 'topic-not-exist',
+        },
+      })
+    }
+    else if (!wasSubscribed) {
+      reporter?.onClientUnsuccessfulUnsubscribeTopic?.(senderClient, 'not-subscribed')
+      sendMessageToClient(senderClient, {
+        type: MessageType.UNSUBSCRIBE_UNSUCCESSFUL,
+        dateCreated: Date.now(),
+        data: {
+          topic: topicName,
+          data: 'not-subscribed',
+        },
+      })
+    }
+    else {
       reporter?.onClientUnsubscribeTopic?.(senderClient, topicStore.getTopic(topicName))
+    }
   })
 }
 

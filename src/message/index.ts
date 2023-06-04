@@ -9,9 +9,14 @@ export const sortMessagesByType = (msgs: Message | Message[]): { [TMessageType i
     action: [],
     state: [],
     topic_deleted: [],
+    subscribe_unsuccessful: [],
+    unsubscribe_unsuccessful: [],
   }
+
   normalizedMsgs.forEach(msg => {
-    result[msg.type].push(msg as any)
+    // Typescript just isn't ready for this kind of stuff.
+    // @ts-ignore
+    result[msg.type].push(msg)
   })
 
   return result

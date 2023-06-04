@@ -2,7 +2,6 @@ import { WebSocketAdapter, WebSocketAdapterOptions } from './types'
 import { WebSocketEventHandlerMap, WebSocketEventName } from '../types'
 
 import { ConnectionStatus } from '../../connectionStatus'
-import { DisconnectInfo } from '../../types'
 import { createListenerStore } from '../../listenerStore'
 import { parseDisconnectReason } from './common'
 import { wait } from '../../async'
@@ -10,8 +9,9 @@ import { wait } from '../../async'
 const _connect = (host: string, port: number, retryDelayMs: number, onConnect: (ws: WebSocket) => void, onConnectAttemptFail: () => void) => {
   let ws: WebSocket
   ws = new WebSocket(`ws://${host}:${port}`)
-  let onOpen: () => void = null
-  let onClose: () => void = null
+  let onOpen: () => void
+  let onClose: () => void
+  // eslint-disable-next-line prefer-const
   onOpen = () => {
     ws.removeEventListener('open', onOpen)
     ws.removeEventListener('close', onClose)
@@ -21,6 +21,8 @@ const _connect = (host: string, port: number, retryDelayMs: number, onConnect: (
     ws.removeEventListener('open', onOpen)
     ws.removeEventListener('close', onClose)
     ws.close()
+    // We do an ignore here as the required JS logic to avoid this is extensive and adds overhead
+    // @ts-ignore
     ws = null
     onConnectAttemptFail()
     wait(retryDelayMs).then(() => {

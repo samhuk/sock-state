@@ -1,6 +1,5 @@
-import { ActionMessage, Message, TopicDeletedMessage } from '../../message/types'
-
 import { Client } from '../../common/server/clientStore/types'
+import { Message } from '../../message/types'
 
 export type AddSubscriberResult = { isNew: boolean, subscriber: Subscriber }
 

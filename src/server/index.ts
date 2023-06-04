@@ -1,9 +1,14 @@
 import { StoreServer, StoreServerOptions } from './types'
 
+import { Client } from '../common/server/clientStore/types'
 import { Message } from '../message/types'
 import { createMessageProcessor } from './messageProcessor'
 import { createServer } from '../common/server'
 import { createTopicStore } from './topicStore'
+
+export const sendMessageToClient = (client: Client, msg: Message): void => {
+  client.ws.send(JSON.stringify(msg))
+}
 
 export const createStoreServer = (options: StoreServerOptions): StoreServer => {
   options.reporter?.onBegin?.(options)
@@ -23,6 +28,7 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
 
   const topicStore = createTopicStore({
     topics: options.topics,
+    subscriptionAcceptor: options.subscriptionAcceptor,
   })
 
   const messageProcessor = createMessageProcessor({
@@ -52,6 +58,10 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
     deleteTopic: (topicName, data) => (
       topicStore.deleteTopic(topicName, data)
     ),
+    disconnectClient: (clientUuid, data) => {
+      topicStore.unsubscribeClientFromAllTopics(clientUuid)
+      return server.disconnectClient(clientUuid, data)
+    },
     close: () => server.close(),
   }
 }

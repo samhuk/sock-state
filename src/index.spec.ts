@@ -33,6 +33,9 @@ const fooBarReducer: Reducer<FooBarState, FooBarActions> = (state, action) => {
   if (state == null)
     return INITIAL_FOO_BAR_STATE
 
+  if (action == null)
+    return state
+
   switch (action.type) {
     case 'setFoo':
       return {

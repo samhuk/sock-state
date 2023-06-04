@@ -15,8 +15,12 @@ const subscribeClientToTopic = (
   clientUuidToSubscribedTopicNames: ClientUuidToSubscribeTopicNamesDict,
   client: Client,
   topicName: string,
-): AddSubscriberResult => {
-  const addSubscriberResult = topics[topicName]?.subscribeClient(client)
+): AddSubscriberResult | undefined => {
+  const topic = topics[topicName]
+  if (topic == null)
+    return undefined
+
+  const addSubscriberResult = topic.subscribeClient(client)
   if (addSubscriberResult.isNew) {
     if (clientUuidToSubscribedTopicNames[client.uuid] == null)
       clientUuidToSubscribedTopicNames[client.uuid] = {}
@@ -32,8 +36,12 @@ const unsubscribeClientToTopic = (
   clientUuidToSubscribedTopicNames: ClientUuidToSubscribeTopicNamesDict,
   clientUuid: string,
   topicName: string,
-): boolean => {
-  const wasSubscribed = topics[topicName]?.unsubscribeClient(clientUuid)
+): boolean | undefined => {
+  const topic = topics[topicName]
+  if (topic == null)
+    return undefined
+
+  const wasSubscribed = topic.unsubscribeClient(clientUuid)
   if (wasSubscribed
     && (clientUuid in clientUuidToSubscribedTopicNames)
     && (topicName in clientUuidToSubscribedTopicNames[clientUuid]))
@@ -118,7 +126,7 @@ export const createTopicStore = (options: TopicStoreOptions): TopicStore => {
       deleteTopic(topics, clientUuidToSubscribedTopicNames, topicName, data)
     ),
     subscribeClientToTopic: (client, topicName) => (
-      subscribeClientToTopic(topics, clientUuidToSubscribedTopicNames, client, topicName).subscriber
+      subscribeClientToTopic(topics, clientUuidToSubscribedTopicNames, client, topicName)?.subscriber
     ),
     unsubscribeClientFromTopic: (clientUuid, topicName) => (
       unsubscribeClientToTopic(topics, clientUuidToSubscribedTopicNames, clientUuid, topicName)
