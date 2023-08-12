@@ -17,17 +17,13 @@
 
 ## Overview
 
-Sock State allows you to create [Redux](https://redux.js.org/)-like stores that can be updated and subscribed to over [Web Sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API).
-
-Sock State breaks down your state into **Topics**. Clients dispatch **Actions** to Topics to update it's state. Actions dispatched to Topics are broadcasted to all subscribers of that Topic, notifying them of state changes.
+Sock State allows you to create [Redux](https://redux.js.org/)-like stores that can be updated and subscribed to over [Web Sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API), allowing with Javascript distributed computing.
 
 ## Usage Overview
 
-```js
-import { createStoreServer } from 'sock-state'
-import { createNodeStoreClient } from 'sock-state/lib/client/node'
+Create a **Reducer** just like you do with Redux:
 
-// Declare reducer for server and client
+```typescript
 export const chatAppReducer = (state, action) => {
   if (state == null)
     return { messages: [] }
@@ -39,51 +35,68 @@ export const chatAppReducer = (state, action) => {
       return state
   }
 }
+```
 
-// Declare action creators
-const addMessage = (message: string) => ({
-  type: 'addMessage',
-  payload: message,
-})
+Create a **Store Server** with a **Topic** that uses the Reducer:
 
-// Create server for websockets and state
+```typescript
+import { createStoreServer } from 'sock-state'
+
 const server = createStoreServer({
   host: 'localhost',
   port: 4000,
   topics: { chatApp: { reducer: chatAppReducer } },
 })
+```
 
-// Create clients and connect to server
+Create **Store Clients** and connect them to the Store Server:
+
+```typescript
+import { createNodeStoreClient } from 'sock-state/lib/client/node'
+
+const addMessage = message => ({
+  type: 'addMessage',
+  payload: message,
+})
+
 const client1 = createNodeStoreClient({ host: 'localhost', port: 4000 })
 const client2 = createNodeStoreClient({ host: 'localhost', port: 4000 })
+
 client1.connect()
 client2.connect()
+```
 
-// Subscribe clients to topic actions
+Subscribe Store Clients to Topics (using the Reducer), and listen for Topic events (e.g. state changes):
+
+```typescript
 const client1Topic = storeClient.topic('chatApp')
 const client2Topic = storeClient.topic('chatApp')
 
-// Subscribe clients to topic state changes
 client1Topic.on('state-change', chatAppReducer, state => {
   console.log('client 1 new state:', state.messages)
 })
 client2Topic.on('state-change', chatAppReducer, state => {
   console.log('client 2 new state:', state.messages)
 })
+```
 
-// Dispatch actions to topics
+Dispatch actions to Topics to update their state:
+
+```typescript
+const addMessage = message => ({
+  type: 'addMessage',
+  payload: message,
+})
+
 client2Topic.dispatch(addMessage('Hello Client 2'))
 client2Topic.dispatch(addMessage('Hello Client 1'))
 ```
 
 ### Dynamic Topics
 
-Topics can be added to and removed from the server. Any clients subscribed to a topic that is deleted will be notified and automatically unsusbcribe from it.
-
-Basic example:
+Topics can be added to and removed from the server. Any clients subscribed to a topic that is deleted will be notified and automatically unsusbcribe from it. Basic example:
 
 ```typescript
-// Create server for websockets and state
 const server = createStoreServer({
   host: 'localhost',
   port: 4000,
@@ -94,9 +107,7 @@ server.deleteTopic('chatApp')
 
 ### Accepting/Rejecting Connections
 
-Connections can be accepted or rejected conditionally.
-
-Basic example:
+Connections to the server can be accepted or rejected conditionally. This can be used for basic authentication. Basic example:
 
 ```typescript
 const server = createStoreServer({
@@ -114,9 +125,7 @@ const server = createStoreServer({
 
 ### Event Listening
 
-Various events can be listened for.
-
-Basic example:
+Various events can be listened for. Basic example:
 
 ```typescript
 const storeServer = createStoreServer({
