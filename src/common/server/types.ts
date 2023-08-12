@@ -1,5 +1,5 @@
-import { RawData, WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
+import { RawData, WebSocket } from 'ws'
 import { Client, Clients } from './clientStore/types'
 
 export type ServerReporter = {
