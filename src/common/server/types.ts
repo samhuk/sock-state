@@ -1,8 +1,6 @@
-// eslint-disable-next-line import/order
-import { Client, Clients } from './clientStore/types'
 import { RawData, WebSocket } from 'ws'
-
 import { IncomingMessage } from 'http'
+import { Client, Clients } from './clientStore/types'
 
 export type ServerReporter = {
   onBegin?: (options: ServerOptions) => void
