@@ -5,8 +5,8 @@ import { Client } from '../common/server/clientStore/types'
 import { StoreServerReporter } from './reporter/types'
 import { TopicOptionsDict } from './topicStore/types'
 
-export type SubscriptionAcceptor<TResultReason extends any = any> =
-  (client: Client, topic: Topic) => boolean | { accepted: boolean, reason: TResultReason }
+export type SubscriptionAcceptor<TResultData extends any = any> =
+  (client: Client, topic: Topic) => boolean | { accepted: boolean, data: TResultData }
 
 export type StoreServer = {
   server: Server
@@ -42,7 +42,7 @@ export type StoreServer = {
 }
 
 export type StoreServerOptions<
-  TSubscriptionAcceptorResultReason extends any = any
+  TSubscriptionAcceptorResultData extends any = any
 > = {
   /**
    * The IP address or host name that the store server will bind to.
@@ -57,13 +57,13 @@ export type StoreServerOptions<
    * to subscribe to.
    */
   topics?: TopicOptionsDict
-  subscriptionAcceptor?: SubscriptionAcceptor<TSubscriptionAcceptorResultReason>
+  subscriptionAcceptor?: SubscriptionAcceptor<TSubscriptionAcceptorResultData>
   /**
    * Optional reporter for the store server.
    *
    * This is useful for logging the various events of the store server.
    */
-  reporter?: StoreServerReporter<TSubscriptionAcceptorResultReason>
+  reporter?: StoreServerReporter<TSubscriptionAcceptorResultData>
   /**
    * Optional function that determines if a connection to the Web Socket server will be accepted
    * or rejected (therefore instantly closed).

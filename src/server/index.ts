@@ -28,12 +28,12 @@ export const createStoreServer = (options: StoreServerOptions): StoreServer => {
 
   const topicStore = createTopicStore({
     topics: options.topics,
-    subscriptionAcceptor: options.subscriptionAcceptor,
   })
 
   const messageProcessor = createMessageProcessor({
     topicStore,
     reporter: options.reporter,
+    subscriptionAcceptor: options.subscriptionAcceptor,
   })
 
   server.on('message', (rawData, senderClient) => {

@@ -79,9 +79,12 @@ export type SubscribeUnsuccessfulMessageOptions = {
 
 export type SubscribeUnsuccessfulMessage = Message<MessageType.SUBSCRIBE_UNSUCCESSFUL>
 
-export type UnsubscribeUnsuccessfulMessage = Message<MessageType.UNSUBSCRIBE_UNSUCCESSFUL>
+export type UnsubscribeUnsuccessfulMessageOptions = {
+  topic: string
+  data?: 'topic-not-exist' | 'not-subscribed'
+}
 
-export type UnsubscribeUnsuccessfulMessageOptions = SubscribeUnsuccessfulMessageOptions
+export type UnsubscribeUnsuccessfulMessage = Message<MessageType.UNSUBSCRIBE_UNSUCCESSFUL>
 
 export type ResolvedMessages = {
   subscribe: SubscribeMessage[],

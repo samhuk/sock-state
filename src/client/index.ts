@@ -1,4 +1,4 @@
-import { ActionMessage, Message, MessageType, StateMessage, TopicDeletedMessage } from '../message/types'
+import { Action, ActionMessage, Message, MessageType, StateMessage, TopicDeletedMessage } from '../message/types'
 import {
   ClientCreator,
   StoreClient,
@@ -16,6 +16,24 @@ import { createListenerStore } from '../common/listenerStore'
 import { createTopicStateStore } from './topicStateStore'
 // eslint-disable-next-line import/order
 import { v4 as uuidv4 } from 'uuid'
+
+const sendActionMessage = (client: Client, action: Action) => {
+  client.send({
+    type: MessageType.ACTION,
+    dateCreated: Date.now(),
+    data: action,
+  })
+}
+
+const sendUnsubscribeMessage = (client: Client, topicName: string) => {
+  client.send({
+    type: MessageType.UNSUBSCRIBE,
+    dateCreated: Date.now(),
+    data: {
+      topics: topicName,
+    },
+  })
+}
 
 const sendSubscriptionRequest = (client: Client, topicName: string) => {
   client.send({
@@ -117,15 +135,30 @@ const createTopicSubscription = (
       // Remove the topic message listener functions first so that no more will be received
       Object.values(offFns).forEach(offFn => offFn())
       // Send message to server to unsubscribe, removing this topic subscription from the topic subscribers pool.
-      client.send({
-        type: MessageType.UNSUBSCRIBE,
-        dateCreated: Date.now(),
-        data: {
-          topics: topicName,
-        },
-      })
+      sendUnsubscribeMessage(client, topicName)
     },
   }
+}
+
+const connectReporterToBaseClient = (
+  client: Client,
+  options: StoreClientOptions,
+) => {
+  client.on('connect', (host, port) => {
+    options.reporter?.onConnect?.(host, port)
+  })
+
+  client.on('disconnect', (host, port, info) => {
+    options.reporter?.onDisconnect?.(host, port, info)
+  })
+
+  client.on('connect-attempt-fail', (host, port) => {
+    options.reporter?.onConnectAttemptFail?.(host, port)
+  })
+
+  client.on('connect-attempt-start', (host, port) => {
+    options.reporter?.onConnectAttemptStart?.(host, port)
+  })
 }
 
 export const createStoreClient = (options: StoreClientOptions, clientCreator: ClientCreator): StoreClient => {
@@ -175,21 +208,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     })
   })
 
-  client.on('connect', (host, port) => {
-    options.reporter?.onConnect?.(host, port)
-  })
-
-  client.on('disconnect', (host, port, info) => {
-    options.reporter?.onDisconnect?.(host, port, info)
-  })
-
-  client.on('connect-attempt-fail', (host, port) => {
-    options.reporter?.onConnectAttemptFail?.(host, port)
-  })
-
-  client.on('connect-attempt-start', (host, port) => {
-    options.reporter?.onConnectAttemptStart?.(host, port)
-  })
+  connectReporterToBaseClient(client, options)
 
   client.on('connection-status-change', (newStatus, prevStatus) => {
     options.reporter?.onConnectionStatusChange?.(newStatus, prevStatus)
@@ -200,11 +219,7 @@ export const createStoreClient = (options: StoreClientOptions, clientCreator: Cl
     getConnectionStatus: () => client.connectionStatus,
     connect: client.connect,
     disconnect: client.disconnect,
-    dispatch: action => client.send({
-      type: MessageType.ACTION,
-      dateCreated: Date.now(),
-      data: action,
-    }),
+    dispatch: action => sendActionMessage(client, action),
     on: (eventName, handler) => listenerStore.add(eventName, handler),
     off: handlerUuid => listenerStore.remove(handlerUuid),
     topic: topicName => {

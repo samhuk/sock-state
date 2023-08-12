@@ -7,7 +7,7 @@ import { Topic } from '../topicStore/topic/types'
 import { WebSocket } from 'ws'
 
 export type StoreServerReporter<
-  TSubscriptionAcceptorResultReason extends any = any
+  TSubscriptionAcceptorResultData extends any = any
 > = {
   onBegin?: (options: StoreServerOptions) => void
   onCreatingServer?: (options: StoreServerOptions) => void
@@ -17,8 +17,12 @@ export type StoreServerReporter<
   onClientAccepted?: (client: Client) => void
   onClientMessage?: (client: Client, msgData: string, options: StoreServerOptions) => void
   onClientDisconnect?: (client: Client, topicNamesUnsubscribedFrom: string[], options: StoreServerOptions) => void
-  onClientSubscribeTopic?: (client: Client, topic: Topic) => void
-  onClientUnsuccessfulSubscribeTopic?: (client: Client, topic: Topic, reason: TSubscriptionAcceptorResultReason | undefined) => void
+  onClientSubscribeTopic?: (client: Client, topic: Topic, subscriptionAcceptorData?: TSubscriptionAcceptorResultData) => void
+  onClientUnsuccessfulSubscribeTopic?: (
+    client: Client,
+    topic: Topic,
+    data?: 'topic-not-exist' | 'not-subscribed' | TSubscriptionAcceptorResultData
+  ) => void
   onClientUnsubscribeTopic?: (client: Client, topic: Topic) => void
   onClientUnsuccessfulUnsubscribeTopic?: (client: Client, reason: 'topic-not-exist' | 'not-subscribed') => void
 }

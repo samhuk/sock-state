@@ -3,7 +3,6 @@ import { Topic, TopicOptions, TopicOptionsWithoutName } from './topic/types'
 import { ActionMessage } from '../../message/types'
 import { Client } from '../../common/server/clientStore/types'
 import { Subscriber } from '../subscriberStore/types'
-import { SubscriptionAcceptor } from '../types'
 
 export type TopicOptionsDict = {
   [topicName: string]: TopicOptionsWithoutName
@@ -11,7 +10,6 @@ export type TopicOptionsDict = {
 
 export type TopicStoreOptions = {
   topics?: TopicOptionsDict
-  subscriptionAcceptor?: SubscriptionAcceptor
 }
 
 export type TopicStore = {
@@ -22,6 +20,11 @@ export type TopicStore = {
    * @returns `true` if given topic exists (therefore was removed), `false` if not.
    */
   deleteTopic: (topicName: string, data?: any) => boolean
+  /**
+   * @returns
+   * * A `Subscriber` object if successful.
+   * * `undefined` if topic does not exist by given `topicName`
+   */
   subscribeClientToTopic: (client: Client, topicName: string) => Subscriber | undefined
   /**
    * @returns
