@@ -17,7 +17,9 @@
 
 ## Overview
 
-Sock State allows you to create [Redux](https://redux.js.org/)-like stores that can be updated and subscribed to over [Web Sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API), allowing with Javascript distributed computing.
+Sock State allows you to create [Redux](https://redux.js.org/)-like stores that can be updated and subscribed to over [Web Sockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API).
+
+This enables distributed computing with Javascript without having to rely on workarounds such as shared stdout streams, HTTP long-polling, and so forth.
 
 ## Usage Overview
 
